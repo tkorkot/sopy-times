@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}Edit SOP — SOP Hub{% endblock %}
+
+{% block content %}
+<div id="editorRoot">
+
+  <!-- Header -->
+  <div class="flex items-center justify-between mb-4">
+    <div>
+      <h1 id="docTitle" class="text-2xl font-bold text-gray-900"></h1>
+      <p id="docMeta" class="text-xs text-gray-400 mt-0.5"></p>
+      <!-- SOP header fields matching real format -->
+      <div id="sopHeader" class="mt-2 grid grid-cols-2 gap-x-6 gap-y-0.5 text-xs text-gray-500">
+        <span><span class="font-medium text-gray-700">CORAL Name:</span> <span id="hCoral"></span></span>
+        <span><span class="font-medium text-gray-700">Location:</span> <span id="hLocation"></span></span>
+        <span><span class="font-medium text-gray-700">Category:</span> <span id="hCategory"></span></span>
+        <span><span class="font-medium text-gray-700">Contact:</span> <span id="hContact"></span></span>
+        <span><span class="font-medium text-gray-700">Last Revision:</span> <span id="hRevision"></span></span>
+        <span><span class="font-medium text-gray-700">Author:</span> <span id="hAuthor"></span></span>
+      </div>
+    </div>
+    <div class="flex gap-2">
+      <button id="aiEditBtn"
+        class="bg-purple-600 text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-purple-700 transition">
+        AI Edit
+      </button>
+      <button id="saveBtn"
+        class="bg-blue-600 text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-blue-700 transition">
+        Save Changes
+      </button>
+    </div>
+  </div>
+
+  <!-- Two-column layout: editor + sidebar -->
+  <div class="flex gap-6">
+
+    <!-- Left: editor -->
+    <div class="flex-1">
+      <textarea id="contentEditor" rows="28"
+        class="w-full border border-gray-300 rounded-xl px-4 py-3 text-sm font-mono resize-none
+               focus:outline-none focus:ring-2 focus:ring-blue-400">
+      </textarea>
+      <p class="text-xs text-gray-400 mt-1">Markdown is supported.</p>
+    </div>
+
+    <!-- Right: sidebar -->
+    <div class="w-72 space-y-5 shrink-0">
+
+      <!-- AI Edit panel -->
+      <div id="aiEditPanel" class="hidden bg-purple-50 border border-purple-200 rounded-xl p-4">
+        <h3 class="font-semibold text-sm text-purple-800 mb-2">Describe your edit</h3>
+        <textarea id="editDescription" rows="3" placeholder="e.g. Change Ar:O₂ ratio from 80:20 to 90:10"
+          class="w-full border border-purple-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-400"></textarea>
+        <button id="runAiEdit"
+          class="mt-2 w-full bg-purple-600 text-white rounded-lg py-1.5 text-sm font-medium hover:bg-purple-700">
+          Generate Edit
+        </button>
+        <p id="aiEditStatus" class="hidden text-xs text-purple-600 mt-2 text-center">Generating…</p>
+      </div>
+
+      <!-- Propagation proposals -->
+      <div>
+        <h3 class="font-semibold text-sm text-gray-700 mb-2">Propagation Proposals</h3>
+        <p id="proposalsEmpty" class="text-xs text-gray-400">
+          Save a change to see AI-suggested edits in related SOPs.
+        </p>
+        <div id="proposalsList" class="space-y-3"></div>
+      </div>
+
+      <!-- Related documents -->
+      <div>
+        <h3 class="font-semibold text-sm text-gray-700 mb-2">Related SOPs</h3>
+        <div id="relatedList" class="space-y-1 text-sm"></div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<!-- Proposal card template -->
+<template id="proposalCard">
+  <div class="bg-white border border-gray-200 rounded-xl p-3 text-sm">
+    <p class="proposal-target font-medium text-gray-800 mb-1"></p>
+    <p class="proposal-reason text-xs text-gray-500 mb-2"></p>
+    <div class="bg-red-50 rounded p-2 text-xs font-mono text-red-700 mb-1 proposal-original whitespace-pre-wrap"></div>
+    <div class="bg-green-50 rounded p-2 text-xs font-mono text-green-700 mb-2 proposal-proposed whitespace-pre-wrap"></div>
+    <span class="proposal-confidence text-xs text-gray-400"></span>
+    <div class="flex gap-2 mt-2">
+      <button class="apply-btn flex-1 bg-green-600 text-white rounded py-1 text-xs font-medium hover:bg-green-700">Apply</button>
+      <button class="reject-btn flex-1 bg-gray-200 text-gray-600 rounded py-1 text-xs hover:bg-gray-300">Reject</button>
+    </div>
+  </div>
+</template>
+{% endblock %}
+
+{% block scripts %}
+<script>const DOC_ID = {{ doc_id }};</script>
+<script src="{{ url_for('static', filename='js/editor.js') }}"></script>
+{% endblock %}

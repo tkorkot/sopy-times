@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}All SOPs — SOP Hub{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+  <h1 class="text-2xl font-bold text-gray-900">All SOPs</h1>
+  <button id="newDocBtn"
+    class="bg-blue-600 text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-blue-700 transition">
+    + New SOP
+  </button>
+</div>
+
+<!-- Filter bar -->
+<div class="flex gap-3 mb-5">
+  <input id="filterInput" type="text" placeholder="Filter by title or area…"
+    class="border border-gray-300 rounded-lg px-3 py-1.5 text-sm flex-1 focus:outline-none focus:ring-2 focus:ring-blue-400" />
+</div>
+
+<!-- Document list -->
+<div id="docList" class="space-y-3">
+  <p class="text-gray-400 text-sm">Loading…</p>
+</div>
+
+<!-- New document modal -->
+<div id="newDocModal" class="hidden fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+  <div class="bg-white rounded-xl shadow-xl p-6 w-full max-w-lg">
+    <h2 class="font-semibold text-lg mb-4">New SOP</h2>
+    <div class="space-y-3">
+      <input id="newTitle" type="text" placeholder="Title"
+        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+      <input id="newArea" type="text" placeholder="Process area (e.g. Plasma Cleaning)"
+        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+      <input id="newTags" type="text" placeholder="Tags (comma-separated)"
+        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+      <textarea id="newContent" rows="6" placeholder="SOP content (Markdown supported)…"
+        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
+    </div>
+    <div class="flex justify-end gap-3 mt-4">
+      <button id="cancelNewDoc" class="text-sm text-gray-500 hover:text-gray-700">Cancel</button>
+      <button id="saveNewDoc"
+        class="bg-blue-600 text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-blue-700">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Doc card template -->
+<template id="docCard">
+  <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex items-center justify-between">
+    <div>
+      <a class="doc-title font-medium text-blue-700 hover:underline" href="#"></a>
+      <p class="doc-area text-xs text-gray-400 mt-0.5"></p>
+      <div class="doc-tags mt-1 flex flex-wrap gap-1"></div>
+    </div>
+    <div class="flex items-center gap-3 text-xs text-gray-400">
+      <span class="doc-version"></span>
+      <a class="doc-edit text-blue-500 hover:underline" href="#">Edit</a>
+    </div>
+  </div>
+</template>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+{% endblock %}

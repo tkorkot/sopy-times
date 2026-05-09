@@ -1,0 +1,22 @@
+/* Minor additions on top of Tailwind CDN */
+
+/* Smooth transitions */
+a, button { transition: color 0.15s, background-color 0.15s; }
+
+/* Monospace content areas */
+#contentEditor { line-height: 1.6; }
+
+/* Tag pills */
+.tag-pill {
+  display: inline-block;
+  background: #e0e7ff;
+  color: #3730a3;
+  font-size: 0.7rem;
+  padding: 1px 8px;
+  border-radius: 9999px;
+  font-weight: 500;
+}
+
+/* Diff colours used in proposal cards */
+.diff-remove { background: #fee2e2; color: #991b1b; }
+.diff-add    { background: #dcfce7; color: #166534; }

@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — SOP Hub{% endblock %}
+
+{% block content %}
+<div class="flex items-center justify-between mb-6">
+  <div>
+    <h1 class="text-2xl font-bold text-gray-900">Your Process Overview</h1>
+    <p id="profileSummary" class="text-sm text-gray-500 mt-1"></p>
+  </div>
+  <a href="/" class="text-sm text-blue-600 hover:underline">Change profile</a>
+</div>
+
+<!-- Results area -->
+<div id="results" class="space-y-4">
+  <p class="text-gray-400 text-sm">Loading relevant SOPs…</p>
+</div>
+
+<!-- SOP card template (cloned by JS) -->
+<template id="sopCard">
+  <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex gap-4">
+    <div class="flex-1">
+      <div class="flex items-start justify-between">
+        <a class="sop-title font-semibold text-blue-700 hover:underline text-base" href="#"></a>
+        <span class="sop-score ml-3 text-xs font-medium px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 whitespace-nowrap"></span>
+      </div>
+      <p class="sop-area text-xs text-gray-400 mt-0.5"></p>
+      <p class="sop-reason text-sm text-gray-600 mt-2"></p>
+      <div class="sop-tags mt-3 flex flex-wrap gap-1"></div>
+    </div>
+  </div>
+</template>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+{% endblock %}
