@@ -1,5 +1,8 @@
-data/
+data/*
+!data/sample_sops/
 __pycache__/
+uploads/
+instance/
 
 .env
 .venv

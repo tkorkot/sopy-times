@@ -95,42 +95,94 @@ if (docList) {
     renderDocs(allDocs);
   }
 
+  function buildCard(doc) {
+    const tmpl = document.getElementById("docCard");
+    const card = tmpl.content.cloneNode(true);
+    card.querySelector(".doc-title").textContent = doc.title;
+    card.querySelector(".doc-title").href = `/documents/${doc.id}`;
+    card.querySelector(".doc-edit").href  = `/documents/${doc.id}`;
+    card.querySelector(".doc-version").textContent = `v${doc.version}`;
+
+    if (doc.process_area) card.querySelector(".doc-area").textContent = doc.process_area;
+    if (doc.location)     card.querySelector(".doc-location").textContent = `📍 ${doc.location}`;
+    if (doc.coral_name && doc.coral_name !== "N/A (General Lab Procedure)")
+      card.querySelector(".doc-coral").textContent = `CORAL: ${doc.coral_name}`;
+
+    // doc_type badge: SOP = blue, INFO = gray
+    const badge = card.querySelector(".doc-type-badge");
+    if (doc.doc_type === "SOP") {
+      badge.textContent = "SOP";
+      badge.classList.add("bg-blue-100", "text-blue-700");
+    } else if (doc.doc_type === "INFO") {
+      badge.textContent = "INFO";
+      badge.classList.add("bg-gray-100", "text-gray-500");
+    }
+
+    const tagsEl = card.querySelector(".doc-tags");
+    (doc.tags || []).forEach(tag => {
+      const pill = document.createElement("span");
+      pill.className = "tag-pill";
+      pill.textContent = tag;
+      tagsEl.appendChild(pill);
+    });
+
+    return card;
+  }
+
   function renderDocs(docs) {
     docList.innerHTML = "";
     if (!docs.length) {
       docList.innerHTML = '<p class="text-gray-400 text-sm">No SOPs yet — upload a PDF to get started.</p>';
       return;
     }
-    const tmpl = document.getElementById("docCard");
+
+    // Group: step_name → step_type_name → [docs]
+    const byStep = new Map();
     docs.forEach(doc => {
-      const card = tmpl.content.cloneNode(true);
-      card.querySelector(".doc-title").textContent = doc.title;
-      card.querySelector(".doc-title").href = `/documents/${doc.id}`;
-      card.querySelector(".doc-edit").href   = `/documents/${doc.id}`;
-      card.querySelector(".doc-version").textContent = `v${doc.version}`;
+      const step = doc.step_name || "Uncategorized";
+      const type = doc.step_type_name || "General";
+      if (!byStep.has(step)) byStep.set(step, new Map());
+      const byType = byStep.get(step);
+      if (!byType.has(type)) byType.set(type, []);
+      byType.get(type).push(doc);
+    });
 
-      if (doc.process_area) card.querySelector(".doc-area").textContent = doc.process_area;
-      if (doc.location)     card.querySelector(".doc-location").textContent = `📍 ${doc.location}`;
-      if (doc.coral_name && doc.coral_name !== "N/A (General Lab Procedure)")
-        card.querySelector(".doc-coral").textContent = `CORAL: ${doc.coral_name}`;
-      if (doc.source_pdf)   card.querySelector(".doc-pdf-badge").classList.remove("hidden");
+    byStep.forEach((byType, stepName) => {
+      // Step section header
+      const stepSection = document.createElement("div");
 
-      const tagsEl = card.querySelector(".doc-tags");
-      (doc.tags || []).forEach(tag => {
-        const pill = document.createElement("span");
-        pill.className = "tag-pill";
-        pill.textContent = tag;
-        tagsEl.appendChild(pill);
+      const stepHeader = document.createElement("h2");
+      stepHeader.className = "text-base font-semibold text-gray-800 mb-3 border-b border-gray-200 pb-1";
+      stepHeader.textContent = stepName;
+      stepSection.appendChild(stepHeader);
+
+      byType.forEach((typeDocs, typeName) => {
+        const typeSection = document.createElement("div");
+        typeSection.className = "mb-4";
+
+        // Only show the type sub-header if it differs from the step name
+        if (typeName !== stepName && typeName !== "General") {
+          const typeHeader = document.createElement("h3");
+          typeHeader.className = "text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 ml-1";
+          typeHeader.textContent = typeName;
+          typeSection.appendChild(typeHeader);
+        }
+
+        const grid = document.createElement("div");
+        grid.className = "space-y-2";
+        typeDocs.forEach(doc => grid.appendChild(buildCard(doc)));
+        typeSection.appendChild(grid);
+        stepSection.appendChild(typeSection);
       });
 
-      docList.appendChild(card);
+      docList.appendChild(stepSection);
     });
   }
 
   document.getElementById("filterInput")?.addEventListener("input", (e) => {
     const q = e.target.value.toLowerCase();
     renderDocs(allDocs.filter(d =>
-      [d.title, d.process_area, d.location, d.coral_name, ...(d.tags || [])]
+      [d.title, d.process_area, d.location, d.coral_name, d.step_name, d.step_type_name, ...(d.tags || [])]
         .some(v => (v || "").toLowerCase().includes(q))
     ));
   });
@@ -145,9 +197,56 @@ if (docList) {
   const uploadSuccess  = document.getElementById("uploadSuccess");
   const uploadError    = document.getElementById("uploadError");
 
+  // Load existing steps for the dropdowns
+  let _stepsCache = null;
+  async function loadSteps() {
+    if (_stepsCache) return _stepsCache;
+    try {
+      const res = await fetch("/api/documents/steps");
+      _stepsCache = await res.json();
+    } catch { _stepsCache = []; }
+    return _stepsCache;
+  }
+
+  async function populateStepDropdown() {
+    const steps = await loadSteps();
+    const sel = document.getElementById("stepSelect");
+    sel.innerHTML = '<option value="">— select or type —</option>';
+    steps.forEach(s => {
+      const opt = document.createElement("option");
+      opt.value = s.name;
+      opt.textContent = s.name;
+      sel.appendChild(opt);
+    });
+  }
+
+  document.getElementById("stepSelect")?.addEventListener("change", async (e) => {
+    const steps = await loadSteps();
+    const chosen = steps.find(s => s.name === e.target.value);
+    const typeSel = document.getElementById("typeSelect");
+    typeSel.innerHTML = '<option value="">— select or type —</option>';
+    if (chosen) {
+      chosen.types.forEach(t => {
+        const opt = document.createElement("option");
+        opt.value = t.name;
+        opt.textContent = t.name;
+        typeSel.appendChild(opt);
+      });
+    }
+    document.getElementById("stepInput").value = "";
+  });
+
+  document.getElementById("stepInput")?.addEventListener("input", () => {
+    document.getElementById("stepSelect").value = "";
+  });
+  document.getElementById("typeInput")?.addEventListener("input", () => {
+    document.getElementById("typeSelect").value = "";
+  });
+
   uploadBtn.addEventListener("click", () => {
     uploadZone.classList.toggle("hidden");
     resetUploadUI();
+    if (!uploadZone.classList.contains("hidden")) populateStepDropdown();
   });
 
   browseBtn.addEventListener("click", () => pdfInput.click());
@@ -178,6 +277,17 @@ if (docList) {
   document.getElementById("uploadRetry")?.addEventListener("click", resetUploadUI);
 
   async function uploadFile(file) {
+    // Resolve step / type from either the dropdown or the free-text input
+    const stepName = (document.getElementById("stepSelect")?.value ||
+                      document.getElementById("stepInput")?.value || "").trim();
+    const typeName = (document.getElementById("typeSelect")?.value ||
+                      document.getElementById("typeInput")?.value || "").trim();
+
+    if (!stepName) {
+      showUploadError("Please select or enter a Process Step before uploading.");
+      return;
+    }
+
     // Show progress state
     uploadIdle.classList.add("hidden");
     uploadProgress.classList.remove("hidden");
@@ -190,6 +300,8 @@ if (docList) {
 
     const formData = new FormData();
     formData.append("file", file);
+    formData.append("step_name", stepName);
+    if (typeName) formData.append("step_type_name", typeName);
 
     try {
       const res = await fetch("/api/documents/upload", {

@@ -10,11 +10,39 @@
   </button>
 </div>
 
-<!-- PDF Upload zone (shown when uploadBtn clicked) -->
+<!-- PDF Upload zone -->
 <div id="uploadZone" class="hidden mb-6 border-2 border-dashed border-blue-300 rounded-xl bg-blue-50 p-8 text-center">
   <input id="pdfInput" type="file" accept=".pdf" class="hidden" />
 
   <div id="uploadIdle">
+    <!-- Step / Type selectors -->
+    <div class="flex flex-wrap gap-3 justify-center mb-4">
+      <div class="flex flex-col items-start gap-1">
+        <label class="text-xs font-medium text-gray-600">
+          Process Step <span class="text-red-500">*</span>
+        </label>
+        <div class="flex gap-1">
+          <select id="stepSelect"
+            class="border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 min-w-[160px]">
+            <option value="">— select or type —</option>
+          </select>
+          <input id="stepInput" type="text" placeholder="or new step…"
+            class="border border-gray-300 rounded-lg px-2 py-1.5 text-sm w-36 focus:outline-none focus:ring-2 focus:ring-blue-400" />
+        </div>
+      </div>
+      <div class="flex flex-col items-start gap-1">
+        <label class="text-xs font-medium text-gray-600">Type (optional)</label>
+        <div class="flex gap-1">
+          <select id="typeSelect"
+            class="border border-gray-300 rounded-lg px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-400 min-w-[140px]">
+            <option value="">— select or type —</option>
+          </select>
+          <input id="typeInput" type="text" placeholder="or new type…"
+            class="border border-gray-300 rounded-lg px-2 py-1.5 text-sm w-32 focus:outline-none focus:ring-2 focus:ring-blue-400" />
+        </div>
+      </div>
+    </div>
+
     <p class="text-blue-700 font-medium mb-1">Drop your SOP PDF here</p>
     <p class="text-xs text-gray-500 mb-4">or click to browse — PDF only</p>
     <button id="browseBtn"
@@ -49,31 +77,31 @@
 
 <!-- Filter bar -->
 <div class="flex gap-3 mb-5">
-  <input id="filterInput" type="text" placeholder="Filter by title, area, or tag…"
+  <input id="filterInput" type="text" placeholder="Filter by title, step, type, or tag…"
     class="border border-gray-300 rounded-lg px-3 py-1.5 text-sm flex-1 focus:outline-none focus:ring-2 focus:ring-blue-400" />
 </div>
 
-<!-- Document list -->
-<div id="docList" class="space-y-3">
+<!-- Document list (grouped by Step > StepType) -->
+<div id="docList" class="space-y-6">
   <p class="text-gray-400 text-sm">Loading…</p>
 </div>
 
-<!-- Doc card template -->
+<!-- Card template (cloned per document in JS) -->
 <template id="docCard">
   <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
     <div class="flex items-start justify-between">
       <div class="flex-1 min-w-0">
         <a class="doc-title font-medium text-blue-700 hover:underline block truncate" href="#"></a>
-        <div class="flex flex-wrap gap-x-4 gap-y-0.5 mt-0.5">
-          <p class="doc-area text-xs text-gray-400"></p>
+        <div class="flex flex-wrap gap-x-3 gap-y-0.5 mt-0.5">
+          <p class="doc-area   text-xs text-gray-400"></p>
           <p class="doc-location text-xs text-gray-400"></p>
-          <p class="doc-coral text-xs text-gray-400"></p>
+          <p class="doc-coral  text-xs text-gray-400"></p>
         </div>
         <div class="doc-tags mt-2 flex flex-wrap gap-1"></div>
       </div>
-      <div class="flex items-center gap-3 text-xs text-gray-400 ml-4 shrink-0">
-        <span class="doc-version"></span>
-        <span class="doc-pdf-badge hidden text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded">PDF</span>
+      <div class="flex items-center gap-2 text-xs text-gray-400 ml-4 shrink-0">
+        <span class="doc-type-badge px-2 py-0.5 rounded font-medium text-xs"></span>
+        <span class="doc-version text-gray-400"></span>
         <a class="doc-edit text-blue-500 hover:underline" href="#">Open</a>
       </div>
     </div>
