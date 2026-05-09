@@ -58,6 +58,20 @@
         <p id="aiEditStatus" class="hidden text-xs text-purple-600 mt-2 text-center">Generating…</p>
       </div>
 
+      <!-- Study Guide -->
+      <div class="border border-purple-100 rounded-xl p-4 bg-purple-50">
+        <h3 class="font-semibold text-sm text-purple-800 mb-3">Study Guide / Summary</h3>
+        <select id="roleSelect"
+          class="w-full border border-purple-300 rounded-lg px-3 py-1.5 text-sm mb-2 focus:outline-none focus:ring-2 focus:ring-purple-400 bg-white">
+          <option value="">Loading roles…</option>
+        </select>
+        <button id="generateSummaryBtn"
+          class="w-full bg-purple-600 text-white rounded-lg py-1.5 text-sm font-medium hover:bg-purple-700 transition">
+          Generate Study Guide
+        </button>
+        <p id="summaryStatus" class="hidden text-xs text-purple-600 mt-2 text-center">Generating…</p>
+      </div>
+
       <!-- Propagation proposals -->
       <div>
         <h3 class="font-semibold text-sm text-gray-700 mb-2">Propagation Proposals</h3>
@@ -94,7 +108,28 @@
 </template>
 {% endblock %}
 
+<!-- Study guide modal -->
+<div id="summaryModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-start justify-center p-4 overflow-y-auto">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl mt-8 mb-8">
+    <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+      <div>
+        <h2 class="font-bold text-lg text-gray-900" id="summaryModalTitle">Study Guide</h2>
+        <p class="text-xs text-gray-400" id="summaryModalSubtitle"></p>
+      </div>
+      <div class="flex items-center gap-3">
+        <button id="copySummaryBtn"
+          class="text-sm text-blue-600 hover:underline">Copy</button>
+        <button id="closeSummaryModal"
+          class="text-gray-400 hover:text-gray-700 text-xl leading-none">✕</button>
+      </div>
+    </div>
+    <div id="summaryContent" class="px-6 py-5 prose prose-sm max-w-none text-gray-800 leading-relaxed"></div>
+  </div>
+</div>
+
 {% block scripts %}
 <script>const DOC_ID = {{ doc_id }};</script>
+<!-- marked.js for client-side markdown rendering -->
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script src="{{ url_for('static', filename='js/editor.js') }}"></script>
 {% endblock %}

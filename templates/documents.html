@@ -4,15 +4,52 @@
 {% block content %}
 <div class="flex items-center justify-between mb-6">
   <h1 class="text-2xl font-bold text-gray-900">All SOPs</h1>
-  <button id="newDocBtn"
+  <button id="uploadBtn"
     class="bg-blue-600 text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-blue-700 transition">
-    + New SOP
+    + Upload PDF
   </button>
+</div>
+
+<!-- PDF Upload zone (shown when uploadBtn clicked) -->
+<div id="uploadZone" class="hidden mb-6 border-2 border-dashed border-blue-300 rounded-xl bg-blue-50 p-8 text-center">
+  <input id="pdfInput" type="file" accept=".pdf" class="hidden" />
+
+  <div id="uploadIdle">
+    <p class="text-blue-700 font-medium mb-1">Drop your SOP PDF here</p>
+    <p class="text-xs text-gray-500 mb-4">or click to browse — PDF only</p>
+    <button id="browseBtn"
+      class="bg-white border border-blue-400 text-blue-600 rounded-lg px-4 py-2 text-sm hover:bg-blue-50 transition">
+      Choose file
+    </button>
+  </div>
+
+  <div id="uploadProgress" class="hidden">
+    <p id="uploadFileName" class="text-sm font-medium text-gray-700 mb-2"></p>
+    <div class="w-full bg-gray-200 rounded-full h-2">
+      <div id="progressBar" class="bg-blue-500 h-2 rounded-full transition-all" style="width:0%"></div>
+    </div>
+    <p id="uploadStatus" class="text-xs text-gray-500 mt-2">Extracting content…</p>
+  </div>
+
+  <div id="uploadSuccess" class="hidden">
+    <p class="text-green-700 font-medium mb-1">✓ SOP imported successfully</p>
+    <p id="uploadedTitle" class="text-sm text-gray-600 mb-3"></p>
+    <a id="uploadedLink" href="#"
+      class="bg-blue-600 text-white rounded-lg px-4 py-2 text-sm hover:bg-blue-700 transition">
+      Open SOP →
+    </a>
+  </div>
+
+  <div id="uploadError" class="hidden">
+    <p class="text-red-600 font-medium mb-1">Upload failed</p>
+    <p id="uploadErrorMsg" class="text-xs text-gray-500"></p>
+    <button id="uploadRetry" class="mt-3 text-sm text-blue-600 hover:underline">Try again</button>
+  </div>
 </div>
 
 <!-- Filter bar -->
 <div class="flex gap-3 mb-5">
-  <input id="filterInput" type="text" placeholder="Filter by title or area…"
+  <input id="filterInput" type="text" placeholder="Filter by title, area, or tag…"
     class="border border-gray-300 rounded-lg px-3 py-1.5 text-sm flex-1 focus:outline-none focus:ring-2 focus:ring-blue-400" />
 </div>
 
@@ -21,39 +58,24 @@
   <p class="text-gray-400 text-sm">Loading…</p>
 </div>
 
-<!-- New document modal -->
-<div id="newDocModal" class="hidden fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-  <div class="bg-white rounded-xl shadow-xl p-6 w-full max-w-lg">
-    <h2 class="font-semibold text-lg mb-4">New SOP</h2>
-    <div class="space-y-3">
-      <input id="newTitle" type="text" placeholder="Title"
-        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-      <input id="newArea" type="text" placeholder="Process area (e.g. Plasma Cleaning)"
-        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-      <input id="newTags" type="text" placeholder="Tags (comma-separated)"
-        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-      <textarea id="newContent" rows="6" placeholder="SOP content (Markdown supported)…"
-        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-blue-500"></textarea>
-    </div>
-    <div class="flex justify-end gap-3 mt-4">
-      <button id="cancelNewDoc" class="text-sm text-gray-500 hover:text-gray-700">Cancel</button>
-      <button id="saveNewDoc"
-        class="bg-blue-600 text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-blue-700">Save</button>
-    </div>
-  </div>
-</div>
-
 <!-- Doc card template -->
 <template id="docCard">
-  <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4 flex items-center justify-between">
-    <div>
-      <a class="doc-title font-medium text-blue-700 hover:underline" href="#"></a>
-      <p class="doc-area text-xs text-gray-400 mt-0.5"></p>
-      <div class="doc-tags mt-1 flex flex-wrap gap-1"></div>
-    </div>
-    <div class="flex items-center gap-3 text-xs text-gray-400">
-      <span class="doc-version"></span>
-      <a class="doc-edit text-blue-500 hover:underline" href="#">Edit</a>
+  <div class="bg-white rounded-xl border border-gray-100 shadow-sm p-4">
+    <div class="flex items-start justify-between">
+      <div class="flex-1 min-w-0">
+        <a class="doc-title font-medium text-blue-700 hover:underline block truncate" href="#"></a>
+        <div class="flex flex-wrap gap-x-4 gap-y-0.5 mt-0.5">
+          <p class="doc-area text-xs text-gray-400"></p>
+          <p class="doc-location text-xs text-gray-400"></p>
+          <p class="doc-coral text-xs text-gray-400"></p>
+        </div>
+        <div class="doc-tags mt-2 flex flex-wrap gap-1"></div>
+      </div>
+      <div class="flex items-center gap-3 text-xs text-gray-400 ml-4 shrink-0">
+        <span class="doc-version"></span>
+        <span class="doc-pdf-badge hidden text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded">PDF</span>
+        <a class="doc-edit text-blue-500 hover:underline" href="#">Open</a>
+      </div>
     </div>
   </div>
 </template>

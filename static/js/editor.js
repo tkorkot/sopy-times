@@ -144,5 +144,77 @@ document.getElementById("runAiEdit").addEventListener("click", async () => {
   }
 });
 
+/* ── Study Guide ─────────────────────────────────────── */
+async function loadRoles() {
+  const res  = await fetch("/api/summaries/roles");
+  const roles = await res.json();
+  const sel  = document.getElementById("roleSelect");
+  sel.innerHTML = roles.map(r =>
+    `<option value="${r.value}">${r.label}</option>`
+  ).join("");
+
+  // Pre-select the role closest to the user's saved profile
+  const profile = JSON.parse(sessionStorage.getItem("userProfile") || "{}");
+  const roleMap = {
+    "student": "student",
+    "fab operator": "technician", "manufacturing technician": "technician",
+    "process technician": "technician", "lithography": "technician",
+    "equipment maintenance": "technician", "field service": "technician",
+    "process engineer": "process_engineer",
+    "equipment engineer": "mechanical_engineer",
+    "metrology": "process_engineer", "yield engineer": "process_engineer",
+    "process integration": "process_engineer",
+    "supervisor": "process_engineer", "manager": "process_engineer",
+  };
+  const currentRole = (profile.current_role || "").toLowerCase();
+  for (const [keyword, value] of Object.entries(roleMap)) {
+    if (currentRole.includes(keyword)) { sel.value = value; break; }
+  }
+}
+
+document.getElementById("generateSummaryBtn").addEventListener("click", async () => {
+  const role    = document.getElementById("roleSelect").value;
+  const status  = document.getElementById("summaryStatus");
+  const profile = JSON.parse(sessionStorage.getItem("userProfile") || "{}");
+
+  status.classList.remove("hidden");
+  document.getElementById("generateSummaryBtn").disabled = true;
+
+  try {
+    const res = await fetch(`/api/summaries/${DOC_ID}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ role, user_profile: profile }),
+    });
+    const data = await res.json();
+
+    // Render markdown into the modal
+    document.getElementById("summaryModalTitle").textContent =
+      `${data.role_label} Study Guide`;
+    document.getElementById("summaryModalSubtitle").textContent = currentDoc.title;
+    document.getElementById("summaryContent").innerHTML = marked.parse(data.summary);
+    document.getElementById("summaryModal").classList.remove("hidden");
+    document.body.style.overflow = "hidden";
+  } finally {
+    status.classList.add("hidden");
+    document.getElementById("generateSummaryBtn").disabled = false;
+  }
+});
+
+document.getElementById("closeSummaryModal").addEventListener("click", () => {
+  document.getElementById("summaryModal").classList.add("hidden");
+  document.body.style.overflow = "";
+});
+
+document.getElementById("copySummaryBtn").addEventListener("click", () => {
+  const text = document.getElementById("summaryContent").innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById("copySummaryBtn");
+    btn.textContent = "Copied!";
+    setTimeout(() => btn.textContent = "Copy", 2000);
+  });
+});
+
 /* ── Init ────────────────────────────────────────────── */
 loadDocument();
+loadRoles();

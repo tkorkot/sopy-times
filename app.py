@@ -4,6 +4,7 @@ from database.db import db
 from routes.documents import documents_bp
 from routes.search import search_bp
 from routes.changes import changes_bp
+from routes.summaries import summaries_bp
 
 def create_app():
     app = Flask(__name__)
@@ -14,6 +15,7 @@ def create_app():
     app.register_blueprint(documents_bp, url_prefix="/api/documents")
     app.register_blueprint(search_bp,    url_prefix="/api/search")
     app.register_blueprint(changes_bp,   url_prefix="/api/changes")
+    app.register_blueprint(summaries_bp, url_prefix="/api/summaries")
 
     @app.route("/")
     def index():

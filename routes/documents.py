@@ -5,7 +5,7 @@ from werkzeug.utils import secure_filename
 from services import document_service
 from services.pdf_service import extract_from_pdf, sections_to_markdown
 
-UPLOAD_FOLDER = "uploads"
+UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.dirname(__file__)), "uploads")
 ALLOWED_EXT = {"pdf"}
 
 documents_bp = Blueprint("documents", __name__)
@@ -72,27 +72,35 @@ def upload_pdf():
     save_path = os.path.join(UPLOAD_FOLDER, filename)
     file.save(save_path)
 
-    # Extract and parse
-    extracted = extract_from_pdf(save_path)
-    meta      = extracted["metadata"]
-    sections  = extracted["sections"]
-    content   = sections_to_markdown(sections) if sections else extracted["raw_text"]
+    # Extract and parse — wrap in try/except so any crash returns JSON
+    try:
+        extracted = extract_from_pdf(save_path)
+    except Exception as e:
+        return jsonify({"error": f"PDF extraction failed: {e}"}), 500
 
-    doc = document_service.create_document(
-        title              = extracted["title"],
-        content            = content,
-        process_area       = extracted["process_area"],
-        tags               = extracted["tags"],
-        coral_name         = meta.get("coral_name"),
-        location           = meta.get("location"),
-        category           = meta.get("category"),
-        contact            = meta.get("contact"),
-        last_revision      = meta.get("last_revision"),
-        sop_version        = meta.get("sop_version"),
-        author             = meta.get("author"),
-        structured_content = json.dumps(sections),
-        source_pdf         = save_path,
-    )
+    try:
+        meta     = extracted["metadata"]
+        sections = extracted["sections"]
+        content  = sections_to_markdown(sections) if sections else extracted["raw_text"]
+
+        doc = document_service.create_document(
+            title              = extracted["title"],
+            content            = content,
+            process_area       = extracted["process_area"],
+            tags               = extracted["tags"],
+            coral_name         = meta.get("coral_name"),
+            location           = meta.get("location"),
+            category           = meta.get("category"),
+            contact            = meta.get("contact"),
+            last_revision      = meta.get("last_revision"),
+            sop_version        = meta.get("sop_version"),
+            author             = meta.get("author"),
+            structured_content = json.dumps(sections),
+            source_pdf         = save_path,
+        )
+    except Exception as e:
+        return jsonify({"error": f"Failed to save document: {e}"}), 500
+
     return jsonify(doc), 201
 
 
