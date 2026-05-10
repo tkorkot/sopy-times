@@ -7,6 +7,8 @@ from database.db import db
 from database.models import Step
 from services import document_service
 from services.pdf_service import extract_from_pdf, sections_to_markdown
+from services.image_service import extract_images
+from database.models import DocumentImage
 
 UPLOAD_FOLDER = os.path.join(os.path.dirname(os.path.dirname(__file__)), "uploads")
 ALLOWED_EXT = {"pdf"}
@@ -125,7 +127,7 @@ def upload_pdf():
     try:
         meta     = extracted["metadata"]
         sections = extracted["sections"]
-        content  = sections_to_markdown(sections) if sections else extracted["raw_text"]
+        content  = sections_to_markdown(sections) or extracted["raw_text"]
 
         doc = document_service.create_document(
             title              = extracted["title"],
@@ -148,6 +150,25 @@ def upload_pdf():
     except Exception as e:
         return jsonify({"error": f"Failed to save document: {e}"}), 500
 
+    # Extract images from the uploaded PDF
+    try:
+        imgs = extract_images(save_path, doc["id"])
+        for img in imgs:
+            db.session.add(DocumentImage(
+                document_id  = doc["id"],
+                filename     = img["filename"],
+                page_number  = img["page_number"],
+                page_total   = img["page_total"],
+                position_y   = img["position_y"],
+                doc_position = img["doc_position"],
+                section_name = img.get("section_name", "procedure"),
+                width        = img["width"],
+                height       = img["height"],
+            ))
+        db.session.commit()
+    except Exception:
+        pass  # image extraction is best-effort
+
     return jsonify(doc), 201
 
 
@@ -167,6 +188,65 @@ def serve_pdf(doc_id):
         abort(404)
 
     return send_file(str(pdf_path), mimetype="application/pdf")
+
+
+@documents_bp.get("/<int:doc_id>/images")
+def list_images(doc_id):
+    """GET /api/documents/<id>/images — list extracted images with position metadata."""
+    from database.models import DocumentImage
+    imgs = DocumentImage.query.filter_by(document_id=doc_id)\
+               .order_by(DocumentImage.doc_position).all()
+    return jsonify([i.to_dict() for i in imgs])
+
+
+@documents_bp.post("/<int:doc_id>/images/<int:img_id>/replace")
+def replace_image(doc_id, img_id):
+    """
+    POST /api/documents/<id>/images/<img_id>/replace  (multipart)
+    Field: file — new image (PNG, JPG, etc.)
+    Replaces the stored image file on disk and marks it as replaced.
+    """
+    from database.models import DocumentImage
+    from services.image_service import IMAGES_DIR
+    img_record = db.session.get(DocumentImage, img_id)
+    if not img_record or img_record.document_id != doc_id:
+        return jsonify({"error": "Not found"}), 404
+
+    if "file" not in request.files:
+        return jsonify({"error": "No file provided"}), 400
+
+    file = request.files["file"]
+    allowed = {".png", ".jpg", ".jpeg", ".webp", ".gif"}
+    suffix  = Path(file.filename).suffix.lower() if file.filename else ".png"
+    if suffix not in allowed:
+        return jsonify({"error": "Unsupported image format"}), 400
+
+    # Overwrite with the new file, preserving the existing filename slot
+    dest = IMAGES_DIR / str(doc_id) / img_record.filename
+    dest.parent.mkdir(parents=True, exist_ok=True)
+    file.save(str(dest))
+    img_record.is_replaced = True
+    db.session.commit()
+    return jsonify(img_record.to_dict())
+
+
+@documents_bp.get("/<int:doc_id>/formatted")
+def get_formatted(doc_id):
+    """
+    GET /api/documents/<id>/formatted
+    Returns AI-formatted markdown of the document's current content.
+    """
+    from services.ai_display_service import format_sop_content
+    from database.models import Document
+    doc = db.session.get(Document, doc_id)
+    if not doc:
+        return jsonify({"error": "Not found"}), 404
+    formatted = format_sop_content(
+        content=doc.content or "",
+        title=doc.title,
+        structured_content=doc.structured_content or "",
+    )
+    return jsonify({"formatted": formatted})
 
 
 @documents_bp.post("/<int:doc_id>/relations")

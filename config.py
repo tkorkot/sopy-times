@@ -6,6 +6,10 @@ load_dotenv()
 class Config:
     SQLALCHEMY_DATABASE_URI = "sqlite:///sopy.db"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
+    SQLALCHEMY_ENGINE_OPTIONS = {
+        "connect_args": {"timeout": 30},   # wait up to 30s for lock
+        "pool_pre_ping": True,
+    }
     OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
     GOOGLE_DRIVE_FOLDER_ID = os.getenv("GOOGLE_DRIVE_FOLDER_ID")
     DRIVE_DOWNLOAD_DIR = os.getenv("DRIVE_DOWNLOAD_DIR", "data")

@@ -1,36 +1,278 @@
 {% extends "base.html" %}
-{% block title %}Dashboard — SOP Hub{% endblock %}
+
+{% block title %}Process Overview | SOP Hub{% endblock %}
+
+{% block main_class %}max-w-none mx-0 px-0 py-0{% endblock %}
 
 {% block content %}
-<div class="flex items-center justify-between mb-6">
-  <div>
-    <h1 class="text-2xl font-bold text-gray-900">Your Process Overview</h1>
-    <p id="profileSummary" class="text-sm text-gray-500 mt-1"></p>
-  </div>
-  <a href="/" class="text-sm text-blue-600 hover:underline">Change profile</a>
-</div>
 
-<!-- Results area -->
-<div id="results" class="space-y-4">
-  <p class="text-gray-400 text-sm">Loading relevant SOPs…</p>
-</div>
+<div class="dark-page dark-grid-bg">
+  <div class="page-inner">
 
-<!-- SOP card template (cloned by JS) -->
-<template id="sopCard">
-  <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex gap-4">
-    <div class="flex-1">
-      <div class="flex items-start justify-between">
-        <a class="sop-title font-semibold text-blue-700 hover:underline text-base" href="#"></a>
-        <span class="sop-score ml-3 text-xs font-medium px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 whitespace-nowrap"></span>
+    <section class="dashboard-header">
+
+      <div class="dashboard-title-row">
+        <div>
+          <p class="section-label text-cyan">Learning Path For</p>
+
+          <h1 class="dashboard-title" id="db-name">—</h1>
+
+          <p class="dashboard-role">
+            <span id="db-role">—</span> · <span id="db-area">—</span>
+          </p>
+
+          <p class="dashboard-impact" id="db-impact"></p>
+
+          <div id="db-profile-chips" class="profile-chips" style="margin-top:10px;display:flex;flex-wrap:wrap;gap:6px;"></div>
+        </div>
+
+        <a href="/" class="change-profile">Change profile</a>
       </div>
-      <p class="sop-area text-xs text-gray-400 mt-0.5"></p>
-      <p class="sop-reason text-sm text-gray-600 mt-2"></p>
-      <div class="sop-tags mt-3 flex flex-wrap gap-1"></div>
-    </div>
+
+    </section>
+
+
+    <section class="path-strip" style="margin-bottom: 40px;">
+      <div class="path-grid">
+
+        <div class="path-column">
+          <p class="section-label text-cyan">Current Role</p>
+          <h2 class="path-title" id="db-current-role">—</h2>
+          <p class="path-text">SOP workflow · Tool handoffs</p>
+        </div>
+
+        <div class="path-divider">→</div>
+
+        <div class="path-column">
+          <p class="section-label text-blue">Learn Next</p>
+          <h2 class="path-title">Cause + Effect</h2>
+          <p class="path-text">Process flow · Defects · Metrology</p>
+        </div>
+
+        <div class="path-divider">→</div>
+
+        <div class="path-column">
+          <p class="section-label text-amber">Target Role</p>
+          <h2 class="path-title" id="db-target-role">—</h2>
+          <p class="path-text">SPC · Tool training · Troubleshooting</p>
+        </div>
+
+      </div>
+    </section>
+
+
+    <section id="process-map" class="process-map-section">
+
+      <div class="map-header">
+        <div>
+          <p class="section-label text-cyan">Process Map</p>
+          <h2 class="map-title">Follow the wafer.</h2>
+          <p class="map-copy">
+            See what happens before your step, what your step changes, and what it can affect downstream.
+          </p>
+        </div>
+
+        <button id="dl-btn" class="btn btn-dark">Download PNG</button>
+      </div>
+
+      <div class="map-paper">
+        <div id="wrap" class="map-wrap">
+
+          <svg id="diagram" width="900" viewBox="0 0 900 1140" xmlns="http://www.w3.org/2000/svg" class="process-svg">
+            <rect width="900" height="1140" fill="#f6f8fb"/>
+
+            <defs>
+              <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+                <path d="M2 1L8 5L2 9" fill="none" stroke="#667085" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+              </marker>
+            </defs>
+
+            <text x="56" y="52" class="svg-text" font-size="28" font-weight="900" fill="#101828">Lithography Process Flow</text>
+            <text x="56" y="78" class="svg-text" font-size="14" font-weight="450" fill="#667085">
+              Follow the wafer from preparation through patterning, transfer, clean, inspection, and packaging.
+            </text>
+            <line x1="56" y1="96" x2="844" y2="96" stroke="#d0d5dd" stroke-width="1"/>
+
+            <rect x="608" y="35" width="236" height="38" rx="2" fill="#eff6ff" stroke="#bfdbfe"/>
+            <text x="726" y="59" class="svg-text" font-size="13" font-weight="750" fill="#1d4ed8" text-anchor="middle">Steps 2–8 repeat many times</text>
+
+            <!-- Bare wafer -->
+            <rect x="70" y="120" width="760" height="74" rx="4" fill="#ffffff" stroke="#d0d5dd"/>
+            <rect x="96" y="139" width="44" height="36" rx="3" fill="#e2e8f0" stroke="#64748b"/>
+            <text x="118" y="162" class="svg-text" font-size="19" font-weight="850" fill="#475569" text-anchor="middle">Si</text>
+            <text x="165" y="151" class="step-title">Bare Wafer / Starting Sample</text>
+            <text x="165" y="172" class="step-subtitle">The starting surface before processing begins</text>
+            <rect x="575" y="149" width="210" height="18" rx="2" class="wafer"/>
+            <text x="680" y="162" class="tiny" fill="#334155" text-anchor="middle">silicon substrate</text>
+
+            <line x1="450" y1="204" x2="450" y2="226" stroke="#667085" stroke-width="1.3" marker-end="url(#arr)"/>
+
+            <!-- 01 Sample Prep -->
+            <a href="/process/sample-prep" class="process-link">
+              <rect x="70" y="230" width="760" height="84" rx="4" class="step-card"/>
+              <rect x="96" y="249" width="44" height="46" rx="3" fill="#ecfeff" stroke="#06b6d4"/>
+              <text x="118" y="277" class="step-number" fill="#0891b2" text-anchor="middle">01</text>
+              <text x="165" y="263" class="step-title">Sample Prep</text>
+              <text x="165" y="284" class="step-subtitle">Clean and prepare the surface</text>
+              <rect x="575" y="262" width="210" height="18" rx="2" class="wafer"/>
+              <path d="M600 251 Q608 243 616 251 Q624 259 632 251" fill="none" stroke="#06b6d4" stroke-width="2"/>
+              <path d="M645 251 Q653 243 661 251 Q669 259 677 251" fill="none" stroke="#06b6d4" stroke-width="2"/>
+              <path d="M690 251 Q698 243 706 251 Q714 259 722 251" fill="none" stroke="#06b6d4" stroke-width="2"/>
+            </a>
+
+            <line x1="450" y1="324" x2="450" y2="346" stroke="#667085" stroke-width="1.3" marker-end="url(#arr)"/>
+
+            <!-- 02 Deposition -->
+            <a href="/process/deposition" class="process-link">
+              <rect x="70" y="350" width="760" height="84" rx="4" class="step-card"/>
+              <rect x="96" y="369" width="44" height="46" rx="3" fill="#dbeafe" stroke="#2563eb"/>
+              <text x="118" y="397" class="step-number" fill="#1d4ed8" text-anchor="middle">02</text>
+              <text x="165" y="383" class="step-title">Deposition / Film Formation</text>
+              <text x="165" y="404" class="step-subtitle">Add thin films by ALD, PECVD, evaporation, or sputtering</text>
+              <rect x="575" y="382" width="210" height="10" rx="2" class="film-blue"/>
+              <rect x="575" y="392" width="210" height="18" rx="2" class="wafer"/>
+              <text x="680" y="405" class="tiny" fill="#334155" text-anchor="middle">film on wafer</text>
+            </a>
+
+            <line x1="450" y1="444" x2="450" y2="466" stroke="#667085" stroke-width="1.3" marker-end="url(#arr)"/>
+
+            <!-- 03 Thermal -->
+            <a href="/process/thermal-processing" class="process-link">
+              <rect x="70" y="470" width="760" height="84" rx="4" class="step-card"/>
+              <rect x="96" y="489" width="44" height="46" rx="3" fill="#fff7ed" stroke="#f97316"/>
+              <text x="118" y="517" class="step-number" fill="#ea580c" text-anchor="middle">03</text>
+              <text x="165" y="503" class="step-title">Thermal Processing</text>
+              <text x="165" y="524" class="step-subtitle">Anneal, oxidize, bake, or modify material with heat</text>
+              <text x="556" y="513" class="svg-text" font-size="18" font-weight="850" fill="#ea580c">↑</text>
+              <rect x="575" y="502" width="210" height="10" rx="2" class="film-teal"/>
+              <rect x="575" y="512" width="210" height="18" rx="2" class="wafer"/>
+              <text x="680" y="525" class="tiny" fill="#334155" text-anchor="middle">heated / modified film</text>
+            </a>
+
+            <line x1="450" y1="564" x2="450" y2="586" stroke="#667085" stroke-width="1.3" marker-end="url(#arr)"/>
+
+            <!-- 04 Resist -->
+            <a href="/process/resist-processing" class="process-link">
+              <rect x="70" y="590" width="760" height="84" rx="4" class="step-card"/>
+              <rect x="96" y="609" width="44" height="46" rx="3" fill="#ecfccb" stroke="#65a30d"/>
+              <text x="118" y="637" class="step-number" fill="#4d7c0f" text-anchor="middle">04</text>
+              <text x="165" y="623" class="step-title">Resist Processing</text>
+              <text x="165" y="644" class="step-subtitle">Prime, coat, bake, and develop photoresist</text>
+              <rect x="575" y="616" width="210" height="12" rx="2" class="resist"/>
+              <rect x="575" y="628" width="210" height="10" rx="2" class="film-teal"/>
+              <rect x="575" y="638" width="210" height="18" rx="2" class="wafer"/>
+              <text x="680" y="651" class="tiny" fill="#334155" text-anchor="middle">resist coated wafer</text>
+            </a>
+
+            <line x1="450" y1="684" x2="450" y2="706" stroke="#667085" stroke-width="1.3" marker-end="url(#arr)"/>
+
+            <!-- 05 Lithography -->
+            <a href="/process/lithography" class="process-link">
+              <rect x="70" y="710" width="760" height="84" rx="4" class="step-card"/>
+              <rect x="96" y="729" width="44" height="46" rx="3" fill="#eef2ff" stroke="#4f46e5"/>
+              <text x="118" y="757" class="step-number" fill="#4f46e5" text-anchor="middle">05</text>
+              <text x="165" y="743" class="step-title">Lithography / Exposure</text>
+              <text x="165" y="764" class="step-subtitle">Define the pattern using optical direct-write or EBL</text>
+              <line x1="590" y1="720" x2="590" y2="733" stroke="#d97706" stroke-width="2" stroke-dasharray="4 3"/>
+              <line x1="635" y1="720" x2="635" y2="733" stroke="#d97706" stroke-width="2" stroke-dasharray="4 3"/>
+              <line x1="720" y1="720" x2="720" y2="733" stroke="#d97706" stroke-width="2" stroke-dasharray="4 3"/>
+              <rect x="575" y="733" width="60" height="12" class="resist"/>
+              <rect x="635" y="733" width="70" height="12" class="resist-dark"/>
+              <rect x="705" y="733" width="80" height="12" class="resist"/>
+              <rect x="575" y="745" width="210" height="10" rx="2" class="film-teal"/>
+              <rect x="575" y="755" width="210" height="18" rx="2" class="wafer"/>
+              <text x="680" y="768" class="tiny" fill="#334155" text-anchor="middle">patterned resist</text>
+            </a>
+
+            <line x1="450" y1="804" x2="450" y2="826" stroke="#667085" stroke-width="1.3" marker-end="url(#arr)"/>
+
+            <!-- 06 Etch -->
+            <a href="/process/etch" class="process-link">
+              <rect x="70" y="830" width="760" height="84" rx="4" class="step-card"/>
+              <rect x="96" y="849" width="44" height="46" rx="3" fill="#fee2e2" stroke="#dc2626"/>
+              <text x="118" y="877" class="step-number" fill="#dc2626" text-anchor="middle">06</text>
+              <text x="165" y="863" class="step-title">Etch / Pattern Transfer</text>
+              <text x="165" y="884" class="step-subtitle">Transfer the pattern into the film or release structures</text>
+              <rect x="635" y="855" width="70" height="12" class="resist-dark"/>
+              <rect x="635" y="867" width="70" height="10" rx="2" class="film-teal"/>
+              <rect x="575" y="877" width="210" height="18" rx="2" class="wafer"/>
+              <text x="680" y="890" class="tiny" fill="#334155" text-anchor="middle">etched film</text>
+            </a>
+
+            <line x1="450" y1="924" x2="450" y2="946" stroke="#667085" stroke-width="1.3" marker-end="url(#arr)"/>
+
+            <!-- 07 Strip/Clean -->
+            <a href="/process/strip-clean" class="process-link">
+              <rect x="70" y="950" width="760" height="84" rx="4" class="step-card"/>
+              <rect x="96" y="969" width="44" height="46" rx="3" fill="#ecfeff" stroke="#0f766e"/>
+              <text x="118" y="997" class="step-number" fill="#0f766e" text-anchor="middle">07</text>
+              <text x="165" y="983" class="step-title">Strip / Clean</text>
+              <text x="165" y="1004" class="step-subtitle">Remove resist, residue, and contamination after pattern transfer</text>
+              <rect x="635" y="984" width="70" height="10" rx="2" class="film-teal"/>
+              <rect x="575" y="994" width="210" height="18" rx="2" class="wafer"/>
+              <text x="680" y="1007" class="tiny" fill="#334155" text-anchor="middle">clean patterned film</text>
+            </a>
+
+            <line x1="450" y1="1044" x2="450" y2="1066" stroke="#667085" stroke-width="1.3" marker-end="url(#arr)"/>
+
+            <!-- 08 + 09 -->
+            <a href="/process/metrology-inspection" class="process-link">
+              <rect x="202" y="1080" width="238" height="42" rx="4" fill="#ffffff" stroke="#d0d5dd"/>
+              <text x="224" y="1106" class="svg-text" font-size="13" font-weight="800" fill="#101828">08. Inspect / Measure</text>
+            </a>
+            <a href="/process/packaging" class="process-link">
+              <rect x="462" y="1080" width="238" height="42" rx="4" fill="#ffffff" stroke="#d0d5dd"/>
+              <text x="484" y="1106" class="svg-text" font-size="13" font-weight="800" fill="#101828">09. Packaging</text>
+            </a>
+
+          </svg>
+
+        </div>
+      </div>
+
+    </section>
+
+    <section class="recommended-section" style="margin-top:40px;padding-bottom:60px;">
+      <div class="map-header">
+        <div>
+          <p class="section-label text-cyan">Recommended for You</p>
+          <h2 class="map-title">Your matched SOPs.</h2>
+          <p class="map-copy">Ranked by relevance to your role, process area, and background.</p>
+        </div>
+        <a href="/documents" class="btn btn-dark">Browse all SOPs</a>
+      </div>
+
+      <div id="db-sop-results" class="db-sop-grid">
+        <p style="color:var(--slate-400);font-size:0.85rem;">Loading…</p>
+      </div>
+    </section>
+
   </div>
-</template>
+</div>
+
 {% endblock %}
 
 {% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+
 <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+
+<script>
+  const downloadButton = document.getElementById('dl-btn');
+  if (downloadButton) {
+    downloadButton.addEventListener('click', function () {
+      html2canvas(document.getElementById('wrap'), {
+        backgroundColor: '#f6f8fb',
+        scale: 2,
+        useCORS: true,
+        logging: false,
+      }).then(function (canvas) {
+        const link = document.createElement('a');
+        link.download = 'lithography-process-flow.png';
+        link.href = canvas.toDataURL('image/png');
+        link.click();
+      });
+    });
+  }
+</script>
 {% endblock %}

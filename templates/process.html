@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+{% block title %}{{ process.title }} — SOP Hub{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto">
+
+  <!-- Header -->
+  <div class="mb-8">
+    <p class="text-5xl font-semibold text-blue-600 mb-1">
+      {{ process.short_name }}
+    </p>
+    <p id="personaLine" class="text-sm text-gray-500 mt-2">
+      Building personalized process page…
+    </p>
+  </div>
+
+  <!-- Process summary + image -->
+  <section class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+      <div>
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-xl font-semibold text-gray-900">Process Summary</h2>
+        </div>
+
+        <div id="processSummaryText" class="space-y-4 text-sm leading-7 text-gray-700">
+          <p class="text-gray-400">Loading personalized process summary…</p>
+        </div>
+      </div>
+
+      <div>
+        <h3 class="text-sm font-semibold text-gray-700 mb-3">Process Image</h3>
+        <div class="border-2 border-dashed border-blue-200 rounded-xl bg-blue-50 p-6 text-center min-h-[260px] flex items-center justify-center">
+          <img
+            src="{{ url_for('static', filename=process.process_image) }}"
+            alt="{{ process.title }} process diagram"
+            class="hidden max-h-[300px] mx-auto rounded-lg border border-gray-200 bg-white object-contain"
+            onload="this.classList.remove('hidden'); this.nextElementSibling.classList.add('hidden');"
+          />
+          <div class="text-blue-700">
+            <p class="font-medium mb-1">Process image placeholder</p>
+            <p class="text-xs text-gray-500">
+              Add image at <code>static/{{ process.process_image }}</code>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Tool image + tool summary -->
+  <section class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+      <div>
+        <h2 class="text-xl font-semibold text-gray-900 mb-3">Tool Image</h2>
+        <div class="border-2 border-dashed border-purple-200 rounded-xl bg-purple-50 p-6 text-center min-h-[260px] flex items-center justify-center">
+          <img
+            src="{{ url_for('static', filename=process.tool_image) }}"
+            alt="{{ process.title }} tool"
+            class="hidden max-h-[300px] mx-auto rounded-lg border border-gray-200 bg-white object-contain"
+            onload="this.classList.remove('hidden'); this.nextElementSibling.classList.add('hidden');"
+          />
+          <div class="text-purple-700">
+            <p class="font-medium mb-1">Tool image placeholder</p>
+            <p class="text-xs text-gray-500">
+              Add image at <code>static/{{ process.tool_image }}</code>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div>
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-xl font-semibold text-gray-900">Tool Summary</h2>
+        </div>
+
+        <div id="toolSummaryText" class="space-y-4 text-sm leading-7 text-gray-700">
+          <p class="text-gray-400">Loading personalized tool summary…</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Learning focus -->
+  <section class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
+    <h2 class="text-xl font-semibold text-gray-900 mb-3">What You Should Focus On</h2>
+    <ul id="learningFocusList" class="list-disc pl-5 text-sm leading-7 text-gray-700">
+      <li class="text-gray-400">Loading personalized learning focus…</li>
+    </ul>
+  </section>
+
+  <!-- Process parameters table -->
+  <section class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+    <div class="flex items-center justify-between mb-4">
+      <div>
+        <h2 class="text-xl font-semibold text-gray-900">Process Parameters</h2>
+        <p class="text-sm text-gray-500 mt-1">
+          Generic, non-confidential parameters relevant to {{ process.short_name }}.
+        </p>
+      </div>
+    </div>
+
+    <div class="overflow-x-auto border border-gray-100 rounded-xl">
+      <table class="min-w-full text-sm">
+        <thead class="bg-gray-50 border-b border-gray-100">
+          <tr>
+            <th class="text-left font-semibold text-gray-700 px-4 py-3">Parameter</th>
+            <th class="text-left font-semibold text-gray-700 px-4 py-3">Example Value / Range</th>
+            <th class="text-left font-semibold text-gray-700 px-4 py-3">Purpose</th>
+            <th class="text-left font-semibold text-gray-700 px-4 py-3">Notes</th>
+          </tr>
+        </thead>
+        <tbody id="parameterTableBody" class="divide-y divide-gray-100 text-gray-700">
+          <tr>
+            <td colspan="4" class="px-4 py-3 text-gray-400">
+              Loading parameters…
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Recommended SOPs -->
+  <section class="mt-6 bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+    <h2 class="text-xl font-semibold text-gray-900 mb-3">Recommended SOPs for This Process</h2>
+    <div id="processSopList" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <p class="text-sm text-gray-400">Loading matching SOPs…</p>
+    </div>
+  </section>
+
+  <!-- Action buttons -->
+  <section class="mt-6 bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+
+      <a href="/documents?process={{ process.short_name }}"
+        class="rounded-xl border border-green-200 bg-green-50 hover:bg-green-100 transition p-5 group">
+        <h3 class="font-semibold text-gray-900 group-hover:text-green-700 transition">
+          View SOPs
+        </h3>
+        <p class="text-sm text-gray-600 mt-1 leading-6">
+          Open SOPs and documentation related to {{ process.short_name }}.
+        </p>
+      </a>
+
+      <a href="/dashboard"
+        class="rounded-xl border border-blue-200 bg-blue-50 hover:bg-blue-100 transition p-5 group">
+        <h3 class="font-semibold text-gray-900 group-hover:text-blue-700 transition">
+          Back to Process Map
+        </h3>
+        <p class="text-sm text-gray-600 mt-1 leading-6">
+          Return to the wafer flow and choose another process step.
+        </p>
+      </a>
+
+      <a href="/chat"
+        class="rounded-xl border border-purple-200 bg-purple-50 hover:bg-purple-100 transition p-5 group">
+        <h3 class="font-semibold text-gray-900 group-hover:text-purple-700 transition">
+          Ask Questions
+        </h3>
+        <p class="text-sm text-gray-600 mt-1 leading-6">
+          Ask questions about {{ process.short_name }} and related SOPs.
+        </p>
+      </a>
+
+    </div>
+  </section>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  window.PROCESS_SLUG = "{{ process_slug }}";
+  window.PROCESS_TITLE = "{{ process.title }}";
+</script>
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+{% endblock %}

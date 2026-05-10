@@ -67,6 +67,7 @@ class Document(db.Model):
     step      = db.relationship("Step",     back_populates="documents")
     step_type = db.relationship("StepType", back_populates="documents")
     changes   = db.relationship("Change", back_populates="document", cascade="all, delete-orphan")
+    images    = db.relationship("DocumentImage", back_populates="document", cascade="all, delete-orphan")
     related_to   = db.relationship("DocumentRelation", foreign_keys="DocumentRelation.source_id",
                                    back_populates="source", cascade="all, delete-orphan")
     related_from = db.relationship("DocumentRelation", foreign_keys="DocumentRelation.target_id",
@@ -94,8 +95,45 @@ class Document(db.Model):
             "author":        self.author,
             "structured_content": self.structured_content,
             "source_pdf":    self.source_pdf,
-            "created_at":    self.created_at.isoformat(),
-            "updated_at":    self.updated_at.isoformat(),
+            "created_at":    self.created_at.isoformat() if self.created_at else None,
+            "updated_at":    self.updated_at.isoformat() if self.updated_at else None,
+        }
+
+
+class DocumentImage(db.Model):
+    """An image extracted from a document's source PDF."""
+    __tablename__ = "document_images"
+
+    id           = db.Column(db.Integer, primary_key=True)
+    document_id  = db.Column(db.Integer, db.ForeignKey("documents.id"), nullable=False)
+    filename     = db.Column(db.String(500), nullable=False)   # file under static/doc_images/<doc_id>/
+    page_number  = db.Column(db.Integer, default=0)            # 0-indexed page
+    page_total   = db.Column(db.Integer, default=1)
+    position_y   = db.Column(db.Float, default=0.0)            # 0-1 within the page
+    doc_position = db.Column(db.Float, default=0.0)            # 0-1 across the whole document
+    section_name = db.Column(db.String(50), default="procedure")  # detected SOP section
+    width        = db.Column(db.Integer)
+    height       = db.Column(db.Integer)
+    is_replaced  = db.Column(db.Boolean, default=False)
+    created_at   = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+
+    document = db.relationship("Document", back_populates="images")
+
+    def to_dict(self):
+        from services.image_service import image_url
+        return {
+            "id":           self.id,
+            "document_id":  self.document_id,
+            "filename":     self.filename,
+            "url":          image_url(self.document_id, self.filename),
+            "page_number":  self.page_number,
+            "page_total":   self.page_total,
+            "position_y":   self.position_y,
+            "doc_position": self.doc_position,
+            "section_name": self.section_name,
+            "width":        self.width,
+            "height":       self.height,
+            "is_replaced":  self.is_replaced,
         }
 
 

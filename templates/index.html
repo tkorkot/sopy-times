@@ -1,163 +1,360 @@
 {% extends "base.html" %}
+
 {% block title %}SOP Hub — Build Your Profile{% endblock %}
 
+{% block main_class %}max-w-none mx-0 px-0 py-0{% endblock %}
+
 {% block content %}
-<div class="max-w-2xl mx-auto">
-  <div class="mb-8">
-    <h1 class="text-3xl font-bold text-gray-900 mb-2">Welcome to SOP Hub</h1>
-    <p class="text-gray-500">Tell us about your background and we'll personalize SOPs, study guides, and process overviews for you.</p>
-    <p class="text-xs text-gray-400 mt-1">Don't include confidential recipes, exact tool settings, customer names, or proprietary process details.</p>
+
+<div class="dark-page dark-grid-bg">
+  <div class="page-inner">
+
+    <section class="landing-hero">
+
+      <div class="landing-grid">
+
+        <div>
+          <p class="section-label text-cyan">Semiconductor Process Learning</p>
+
+          <h1 class="landing-title">
+            Learn the fab flow behind the tools.
+          </h1>
+
+          <p class="landing-copy">
+            SOP Hub connects your background, role, and tool area to the semiconductor process flow,
+            so you can understand what your step does and what it affects next.
+          </p>
+
+          <div class="button-row" style="margin-top: 32px;">
+            <a href="#profile-form" class="btn btn-primary">Build your profile</a>
+            <a href="/dashboard" class="btn btn-secondary">View sample dashboard</a>
+          </div>
+        </div>
+
+        <div class="hero-image-panel" aria-label="Semiconductor chip, wafer, or fabrication tool image"></div>
+
+      </div>
+
+      <div class="intro-row">
+        <div class="intro-cell">
+          <p class="section-label text-cyan">Understand</p>
+          <p class="intro-title">Where your role fits</p>
+          <p class="intro-text">Connect your tool area to the full wafer flow.</p>
+        </div>
+
+        <div class="intro-cell">
+          <p class="section-label text-blue">Learn</p>
+          <p class="intro-title">What matters next</p>
+          <p class="intro-text">Focus on SOP logic, defects, handoffs, and metrology.</p>
+        </div>
+
+        <div class="intro-cell">
+          <p class="section-label text-amber">Grow</p>
+          <p class="intro-title">Toward the next role</p>
+          <p class="intro-text">See skills and training that support career movement.</p>
+        </div>
+      </div>
+
+    </section>
+
+
+    <section id="profile-form" class="form-header">
+      <p class="section-label text-cyan">Build Your Profile</p>
+
+      <h2 class="form-title">
+        Tell us about your background.
+      </h2>
+
+      <p class="form-copy">
+        Keep this high-level. Do not include confidential recipes, exact tool settings, customer names,
+        or proprietary process details.
+      </p>
+    </section>
+
+
+    <form id="profileForm" class="profile-form">
+
+      <section class="form-section">
+        <div class="form-section-grid">
+          <div>
+            <p class="section-label text-cyan">01 / Identity</p>
+            <h2 class="form-section-title">Who is this for?</h2>
+            <p class="form-section-copy">This appears on your learning dashboard.</p>
+          </div>
+
+          <div class="field-grid-2">
+            <div>
+              <label class="field-label">Name</label>
+              <input name="learner_name" type="text" placeholder="e.g. Jane Doe" class="input-dark" />
+            </div>
+
+            <div>
+              <label class="field-label">
+                LinkedIn URL <span class="field-muted">(optional)</span>
+              </label>
+              <input name="linkedin_url" type="url" placeholder="https://linkedin.com/in/your-profile" class="input-dark" />
+            </div>
+          </div>
+        </div>
+      </section>
+
+
+      <section class="form-section">
+        <div class="form-section-grid">
+          <div>
+            <p class="section-label text-blue">02 / Background</p>
+            <h2 class="form-section-title">Education and training</h2>
+            <p class="form-section-copy">This helps set the right explanation level.</p>
+          </div>
+
+          <div class="field-grid-2">
+            <div>
+              <label class="field-label">Highest Level of Education</label>
+              <select name="education" class="select-dark">
+                <option value="">Select…</option>
+                <option>High school / GED</option>
+                <option>Trade school / technical program</option>
+                <option>Some college</option>
+                <option>Associate degree</option>
+                <option>Bachelor's degree</option>
+                <option>Master's degree</option>
+                <option>PhD</option>
+                <option>Prefer not to say</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="field-label">Main Field of Study</label>
+              <select name="field_of_study" class="select-dark">
+                <option value="">Select…</option>
+                <option>None / not applicable</option>
+                <option>Semiconductor technology</option>
+                <option>Electrical engineering</option>
+                <option>Mechanical engineering</option>
+                <option>Chemical engineering</option>
+                <option>Materials science</option>
+                <option>Physics</option>
+                <option>Chemistry</option>
+                <option>Electronics / electrical technology</option>
+                <option>Mechatronics / robotics / automation</option>
+                <option>Manufacturing technology</option>
+                <option>Computer science / data science</option>
+                <option>Other</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </section>
+
+
+      <section class="form-section">
+        <div class="form-section-grid">
+          <div>
+            <p class="section-label text-cyan">03 / Role</p>
+            <h2 class="form-section-title">Where are you now?</h2>
+            <p class="form-section-copy">Choose the closest match.</p>
+          </div>
+
+          <div class="field-grid-2">
+            <div>
+              <label class="field-label">Current Role</label>
+              <select name="current_role" class="select-dark">
+                <option value="">Select…</option>
+                <option>None / exploring semiconductor careers</option>
+                <option>Student</option>
+                <option>Fab operator / manufacturing technician</option>
+                <option>Process technician / engineering technician</option>
+                <option>Lithography / photo technician</option>
+                <option>Equipment maintenance technician</option>
+                <option>Field service engineer / technician</option>
+                <option>Process engineer</option>
+                <option>Equipment engineer / tool owner</option>
+                <option>Metrology / inspection engineer</option>
+                <option>Yield engineer</option>
+                <option>Process integration engineer</option>
+                <option>Supervisor / lead / manager</option>
+                <option>Other</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="field-label">Experience in This Role</label>
+              <select name="experience_level" class="select-dark">
+                <option value="">Select…</option>
+                <option>None yet</option>
+                <option>Less than 6 months</option>
+                <option>6–12 months</option>
+                <option>1–2 years</option>
+                <option>3–5 years</option>
+                <option>6–10 years</option>
+                <option>10+ years</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </section>
+
+
+      <section class="form-section">
+        <div class="form-section-grid">
+          <div>
+            <p class="section-label text-blue">04 / Process Area</p>
+            <h2 class="form-section-title">Where do you work in the flow?</h2>
+            <p class="form-section-copy">
+              Select the process area or tool group you currently work with. Choose “None” if you do not work in a fab yet.
+            </p>
+          </div>
+
+          <div>
+            <label class="field-label">
+              Current Process Area / Tool Group <span class="field-muted">(select all that apply)</span>
+            </label>
+
+            <div class="check-grid">
+              {% set areas = [
+                "None / not currently working in a process area",
+                "Sample Prep / Surface Cleaning",
+                "Deposition / Film Formation",
+                "Thermal Processing",
+                "Resist Processing",
+                "Lithography / Exposure",
+                "Etch / Pattern Transfer",
+                "Strip Resist / Clean",
+                "Metrology / Inspection",
+                "Packaging / Wirebonding",
+                "Other"
+              ] %}
+              {% for area in areas %}
+              <label class="check-option">
+                <input type="checkbox" name="process_areas" value="{{ area }}" />
+                <span>{{ area }}</span>
+              </label>
+              {% endfor %}
+            </div>
+
+            <div style="margin-top: 16px;">
+              <label class="field-label">Tool names or platforms you work with</label>
+              <input name="tool_names" type="text" placeholder="e.g. MLA150, EBL, RIE, DRIE, PECVD, ellipsometer…" class="input-dark" />
+              <p class="field-help">Avoid confidential recipe names, exact settings, or proprietary details.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+
+      <section class="form-section">
+        <div class="form-section-grid">
+          <div>
+            <p class="section-label text-amber">05 / Certifications</p>
+            <h2 class="form-section-title">Relevant training</h2>
+            <p class="form-section-copy">Select anything that applies.</p>
+          </div>
+
+          <div>
+            <label class="field-label">
+              Certifications / Technical Training <span class="field-muted">(select all that apply)</span>
+            </label>
+
+            <div class="check-grid">
+              {% set certs = [
+                "None",
+                "Cleanroom safety / gowning",
+                "Chemical safety / hazmat",
+                "Laser safety",
+                "Vacuum systems training",
+                "RF / plasma safety",
+                "Tool-specific or vendor training",
+                "Semiconductor manufacturing certificate",
+                "Electronics / electrical safety",
+                "Mechatronics / automation / PLC training",
+                "SPC / statistics / quality control",
+                "Lean / Six Sigma",
+                "OSHA / workplace safety",
+                "Military technical training",
+                "Other"
+              ] %}
+              {% for cert in certs %}
+              <label class="check-option">
+                <input type="checkbox" name="certifications" value="{{ cert }}" />
+                <span>{{ cert }}</span>
+              </label>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+      </section>
+
+
+      <section class="form-section">
+        <div class="form-section-grid">
+          <div>
+            <p class="section-label text-cyan">06 / Goal</p>
+            <h2 class="form-section-title">Where do you want to go?</h2>
+            <p class="form-section-copy">This helps create the path on your dashboard.</p>
+          </div>
+
+          <div class="field-grid-2">
+            <div>
+              <label class="field-label">Target Role</label>
+              <select name="target_role" class="select-dark">
+                <option value="">Select…</option>
+                <option>Not sure yet</option>
+                <option>Fab operator / technician</option>
+                <option>Senior technician / lead technician</option>
+                <option>Equipment technician / field service</option>
+                <option>Process technician</option>
+                <option>Process engineer</option>
+                <option>Equipment engineer</option>
+                <option>Metrology / inspection engineer</option>
+                <option>Yield engineer</option>
+                <option>Process integration engineer</option>
+                <option>Supervisor / manager</option>
+                <option>Other</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="field-label">Main Learning Goal</label>
+              <select name="learning_goal" class="select-dark">
+                <option value="">Select…</option>
+                <option>Understand the full process flow</option>
+                <option>Get better at my current job</option>
+                <option>Understand SOPs and why steps matter</option>
+                <option>Learn how my tool affects other steps</option>
+                <option>Prepare for a new role</option>
+                <option>Explore semiconductor careers</option>
+                <option>Other</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </section>
+
+
+      <section class="form-section">
+        <div class="submit-row">
+          <p id="errorMsg" class="error-msg hidden"></p>
+
+          <p class="submit-note">
+            Your dashboard will summarize your process area, what to learn next, and how the wafer flow connects to your role.
+          </p>
+
+          <div class="submit-actions">
+            <p id="loadingMsg" class="loading-msg hidden">Building your dashboard…</p>
+            <button type="submit" class="btn btn-primary">
+              Build My Dashboard →
+            </button>
+          </div>
+        </div>
+      </section>
+
+    </form>
+
   </div>
-
-  <form id="profileForm" class="space-y-6">
-
-    <!-- LinkedIn -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-      <label class="block text-sm font-semibold text-gray-700 mb-2">LinkedIn URL <span class="font-normal text-gray-400">(optional)</span></label>
-      <input name="linkedin_url" type="url" placeholder="https://linkedin.com/in/your-profile"
-        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-    </div>
-
-    <!-- Education + Field of Study -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
-      <div>
-        <label class="block text-sm font-semibold text-gray-700 mb-2">Highest Level of Education</label>
-        <select name="education"
-          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-          <option value="">Select…</option>
-          <option>High school / GED</option>
-          <option>Trade school / technical program</option>
-          <option>Some college</option>
-          <option>Associate degree</option>
-          <option>Bachelor's degree</option>
-          <option>Master's degree</option>
-          <option>PhD</option>
-          <option>Prefer not to say</option>
-        </select>
-      </div>
-      <div>
-        <label class="block text-sm font-semibold text-gray-700 mb-2">Main Field of Study</label>
-        <select name="field_of_study"
-          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-          <option value="">Select…</option>
-          <option>None / not applicable</option>
-          <option>Mechanical engineering</option>
-          <option>Electrical engineering</option>
-          <option>Chemical engineering</option>
-          <option>Materials science</option>
-          <option>Physics</option>
-          <option>Chemistry</option>
-          <option>Mechatronics / robotics / automation</option>
-          <option>Electronics / electrical technology</option>
-          <option>Manufacturing technology</option>
-          <option>Computer science / data science</option>
-          <option>Semiconductor technology</option>
-          <option>Other</option>
-        </select>
-      </div>
-    </div>
-
-    <!-- Current Role + Experience -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
-      <div>
-        <label class="block text-sm font-semibold text-gray-700 mb-2">Current Role</label>
-        <select name="current_role"
-          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-          <option value="">Select…</option>
-          <option>Student / aspiring semiconductor worker</option>
-          <option>Fab operator / manufacturing technician</option>
-          <option>Lithography / photo technician</option>
-          <option>Process technician / engineering technician</option>
-          <option>Equipment maintenance technician</option>
-          <option>Field service engineer / technician</option>
-          <option>Process engineer</option>
-          <option>Equipment engineer / tool owner</option>
-          <option>Metrology / inspection engineer</option>
-          <option>Yield engineer</option>
-          <option>Process integration engineer</option>
-          <option>Supervisor / lead / manager</option>
-          <option>Other</option>
-        </select>
-      </div>
-      <div>
-        <label class="block text-sm font-semibold text-gray-700 mb-2">Experience in This Role</label>
-        <select name="experience_level"
-          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
-          <option value="">Select…</option>
-          <option>None yet</option>
-          <option>Less than 6 months</option>
-          <option>6–12 months</option>
-          <option>1–2 years</option>
-          <option>3–5 years</option>
-          <option>6–10 years</option>
-          <option>10+ years</option>
-        </select>
-      </div>
-    </div>
-
-    <!-- Certifications -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-      <label class="block text-sm font-semibold text-gray-700 mb-3">Certifications / Technical Training <span class="font-normal text-gray-400">(select all that apply)</span></label>
-      <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-sm">
-        {% set certs = [
-          "None", "Cleanroom training", "Semiconductor manufacturing certificate",
-          "Electronics training", "Mechatronics training", "PLC / automation training",
-          "Vacuum systems training", "Chemical safety / hazmat", "OSHA / workplace safety",
-          "Lean / Six Sigma", "SPC / statistics / quality control",
-          "Tool vendor training", "Military technical training", "Other"
-        ] %}
-        {% for cert in certs %}
-        <label class="flex items-center gap-2 cursor-pointer">
-          <input type="checkbox" name="certifications" value="{{ cert }}"
-            class="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-          <span class="text-gray-700 text-xs">{{ cert }}</span>
-        </label>
-        {% endfor %}
-      </div>
-    </div>
-
-    <!-- Process Areas -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-      <label class="block text-sm font-semibold text-gray-700 mb-3">Process Areas / Tools <span class="font-normal text-gray-400">(select all that apply)</span></label>
-      <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-sm">
-        {% set areas = [
-          "Lithography / photo", "Track / coat / develop", "Scanner / stepper / exposure",
-          "Reticle / mask handling", "CD-SEM", "Overlay metrology", "Defect inspection",
-          "Etch", "Deposition / thin films", "Implant", "Diffusion / thermal", "CMP",
-          "Cleans / wet process", "Metrology", "Yield / defect analysis",
-          "Process integration", "Packaging / assembly", "Facilities / gases / chemicals", "Other"
-        ] %}
-        {% for area in areas %}
-        <label class="flex items-center gap-2 cursor-pointer">
-          <input type="checkbox" name="process_areas" value="{{ area }}"
-            class="rounded border-gray-300 text-blue-600 focus:ring-blue-500" />
-          <span class="text-gray-700 text-xs">{{ area }}</span>
-        </label>
-        {% endfor %}
-      </div>
-      <div class="mt-3">
-        <label class="block text-xs text-gray-500 mb-1">Tool names or platforms you work with (if you can share)</label>
-        <input name="tool_names" type="text" placeholder="e.g. ASML NXT, Applied Centura, TEL…"
-          class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
-        <p class="text-xs text-gray-400 mt-1">Avoid confidential recipe names, exact settings, or proprietary details.</p>
-      </div>
-    </div>
-
-    <!-- Submit -->
-    <div class="flex items-center justify-between">
-      <p id="errorMsg" class="hidden text-sm text-red-500"></p>
-      <div class="flex items-center gap-3 ml-auto">
-        <p id="loadingMsg" class="hidden text-sm text-gray-500">Finding your SOPs…</p>
-        <button type="submit"
-          class="bg-blue-600 text-white rounded-lg px-6 py-2.5 text-sm font-medium hover:bg-blue-700 transition">
-          Personalize My SOPs →
-        </button>
-      </div>
-    </div>
-
-  </form>
 </div>
+
 {% endblock %}
+
 
 {% block scripts %}
 <script src="{{ url_for('static', filename='js/main.js') }}"></script>

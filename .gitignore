@@ -3,6 +3,7 @@ data/*
 __pycache__/
 uploads/
 instance/
+doc_images/
 
 .env
 .venv

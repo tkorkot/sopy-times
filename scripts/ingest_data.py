@@ -39,6 +39,8 @@ from services.document_service import (
     get_or_create_step_type,
 )
 from services.pdf_service import extract_from_pdf, sections_to_markdown
+from services.image_service import extract_images
+from database.models import DocumentImage
 
 DATA_ROOT = Path(os.getenv("DRIVE_DOWNLOAD_DIR", "data"))
 
@@ -70,7 +72,7 @@ def ingest_pdf(pdf_path: Path, step_id: int, step_type_id: int | None, doc_type:
 
     meta     = extracted["metadata"]
     sections = extracted["sections"]
-    content  = sections_to_markdown(sections) if sections else extracted.get("raw_text", "")
+    content  = sections_to_markdown(sections) or extracted.get("raw_text", "")
 
     doc = create_document(
         title              = extracted["title"],
@@ -90,6 +92,27 @@ def ingest_pdf(pdf_path: Path, step_id: int, step_type_id: int | None, doc_type:
         structured_content = json.dumps(sections),
         source_pdf         = str(pdf_path),
     )
+    # Extract and store images
+    try:
+        imgs = extract_images(str(pdf_path), doc["id"])
+        for img in imgs:
+            db.session.add(DocumentImage(
+                document_id  = doc["id"],
+                filename     = img["filename"],
+                page_number  = img["page_number"],
+                page_total   = img["page_total"],
+                position_y   = img["position_y"],
+                doc_position = img["doc_position"],
+                section_name = img["section_name"],
+                width        = img["width"],
+                height       = img["height"],
+            ))
+        db.session.commit()
+        if imgs:
+            print(f"           {len(imgs)} image(s) extracted")
+    except Exception as e:
+        print(f"    [warn] image extraction failed: {e}")
+
     print(f"    [ok]   {doc['title']} (id={doc['id']})")
     return doc
 

@@ -50,7 +50,7 @@ def record_change(doc_id: int, original_content: str, new_content: str, descript
 
 def apply_change(change_id: int) -> dict | None:
     """Apply the primary change — update the document content."""
-    change = Change.query.get(change_id)
+    change = db.session.get(Change, change_id)
     if not change:
         return None
 
@@ -62,11 +62,11 @@ def apply_change(change_id: int) -> dict | None:
 
 def apply_proposal(proposal_id: int) -> dict | None:
     """Accept a single AI propagation proposal and update the target document."""
-    proposal = ChangeProposal.query.get(proposal_id)
+    proposal = db.session.get(ChangeProposal, proposal_id)
     if not proposal:
         return None
 
-    doc = Document.query.get(proposal.target_document_id)
+    doc = db.session.get(Document, proposal.target_document_id)
     if doc and proposal.original_section in doc.content:
         doc.content = doc.content.replace(proposal.original_section, proposal.proposed_section, 1)
         doc.version += 1
@@ -77,7 +77,7 @@ def apply_proposal(proposal_id: int) -> dict | None:
 
 
 def reject_proposal(proposal_id: int) -> dict | None:
-    proposal = ChangeProposal.query.get(proposal_id)
+    proposal = db.session.get(ChangeProposal, proposal_id)
     if not proposal:
         return None
     proposal.status = "rejected"
@@ -85,6 +85,8 @@ def reject_proposal(proposal_id: int) -> dict | None:
     return proposal.to_dict()
 
 
-def get_all_changes() -> list[dict]:
-    changes = Change.query.order_by(Change.created_at.desc()).all()
-    return [c.to_dict() for c in changes]
+def get_all_changes(doc_id: int | None = None) -> list[dict]:
+    q = Change.query.order_by(Change.created_at.desc())
+    if doc_id is not None:
+        q = q.filter_by(document_id=doc_id)
+    return [c.to_dict() for c in q.all()]

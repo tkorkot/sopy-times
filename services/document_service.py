@@ -26,13 +26,16 @@ def get_or_create_step_type(step: Step, name: str) -> StepType:
 
 # ── Document CRUD ────────────────────────────────────────────────────────────
 
-def get_all_documents() -> list[dict]:
-    docs = Document.query.order_by(Document.step_id, Document.step_type_id, Document.title).all()
+def get_all_documents(doc_type: str | None = "SOP") -> list[dict]:
+    q = Document.query
+    if doc_type:
+        q = q.filter_by(doc_type=doc_type)
+    docs = q.order_by(Document.step_id, Document.step_type_id, Document.title).all()
     return [d.to_dict() for d in docs]
 
 
 def get_document(doc_id: int) -> dict | None:
-    doc = Document.query.get(doc_id)
+    doc = db.session.get(Document, doc_id)
     return doc.to_dict() if doc else None
 
 
@@ -78,7 +81,7 @@ def create_document(
 
 
 def update_document(doc_id: int, **fields) -> dict | None:
-    doc = Document.query.get(doc_id)
+    doc = db.session.get(Document, doc_id)
     if not doc:
         return None
     for key in ("title", "content", "process_area"):
@@ -92,7 +95,7 @@ def update_document(doc_id: int, **fields) -> dict | None:
 
 
 def delete_document(doc_id: int) -> bool:
-    doc = Document.query.get(doc_id)
+    doc = db.session.get(Document, doc_id)
     if not doc:
         return False
     db.session.delete(doc)
@@ -108,7 +111,7 @@ def get_related_documents(doc_id: int) -> dict:
     result: dict[str, list] = {"upstream": [], "downstream": [], "similar": []}
     for rel in relations:
         other_id = rel.target_id if rel.source_id == doc_id else rel.source_id
-        other = Document.query.get(other_id)
+        other = db.session.get(Document, other_id)
         if other:
             result.setdefault(rel.relation_type, []).append(other.to_dict())
     return result

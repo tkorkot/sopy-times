@@ -14,8 +14,56 @@ from openai import OpenAI
 from config import Config
 
 _client = None
-MODEL = "openai/gpt-4o-mini"   # cheap + fast; swap to "openai/gpt-4o" for higher quality
+MODEL = "google/gemini-2.5-flash"
 
+def _parse_json_response(raw: str, fallback):
+    """
+    Safely parse JSON returned by an LLM.
+
+    Handles:
+    - empty responses
+    - ```json ... ``` markdown fences
+    - extra text before/after the JSON
+    """
+    import re
+
+    if not raw:
+        return fallback
+
+    raw = raw.strip()
+
+    # Remove markdown fences if model returns ```json ... ```
+    raw = re.sub(r"^```(?:json)?\s*", "", raw)
+    raw = re.sub(r"\s*```$", "", raw)
+    raw = raw.strip()
+
+    # First try normal JSON parsing
+    try:
+        return json.loads(raw)
+    except json.JSONDecodeError:
+        pass
+
+    # Try to extract the first JSON array or object from the response
+    try:
+        array_start = raw.find("[")
+        array_end = raw.rfind("]")
+
+        object_start = raw.find("{")
+        object_end = raw.rfind("}")
+
+        if array_start != -1 and array_end != -1 and array_end > array_start:
+            return json.loads(raw[array_start:array_end + 1])
+
+        if object_start != -1 and object_end != -1 and object_end > object_start:
+            return json.loads(raw[object_start:object_end + 1])
+
+    except json.JSONDecodeError:
+        pass
+
+    print("Could not parse AI JSON response:")
+    print(repr(raw))
+
+    return fallback
 
 def _get_client() -> OpenAI:
     global _client
@@ -27,7 +75,7 @@ def _get_client() -> OpenAI:
     return _client
 
 
-def _chat(prompt: str, max_tokens: int = 1024) -> str:
+def _chat(prompt: str, max_tokens: int = 5000) -> str:
     response = _get_client().chat.completions.create(
         model=MODEL,
         max_tokens=max_tokens,
@@ -43,7 +91,7 @@ def analyze_sop_relevance(user_profile: dict, documents: list[dict]) -> list[dic
 
     Returns:
         List of {"document": <doc dict>, "relevance_score": float, "reason": str}
-        sorted descending by relevance_score (score > 0.2 only).
+        sorted descending by relevance_score.
     """
     if not documents:
         return []
@@ -53,16 +101,24 @@ def analyze_sop_relevance(user_profile: dict, documents: list[dict]) -> list[dic
         for d in documents
     )
 
-    # Build a human-readable persona block from whatever fields are filled in
     p = user_profile
     persona_lines = []
-    if p.get("current_role"):        persona_lines.append(f"Role: {p['current_role']}")
-    if p.get("experience_level"):    persona_lines.append(f"Experience: {p['experience_level']}")
-    if p.get("education"):           persona_lines.append(f"Education: {p['education']}")
-    if p.get("field_of_study"):      persona_lines.append(f"Field of study: {p['field_of_study']}")
-    if p.get("certifications"):      persona_lines.append(f"Certifications: {', '.join(p['certifications'])}")
-    if p.get("process_areas"):       persona_lines.append(f"Process areas: {', '.join(p['process_areas'])}")
-    if p.get("tool_names"):          persona_lines.append(f"Tools: {p['tool_names']}")
+
+    if p.get("current_role"):
+        persona_lines.append(f"Role: {p['current_role']}")
+    if p.get("experience_level"):
+        persona_lines.append(f"Experience: {p['experience_level']}")
+    if p.get("education"):
+        persona_lines.append(f"Education: {p['education']}")
+    if p.get("field_of_study"):
+        persona_lines.append(f"Field of study: {p['field_of_study']}")
+    if p.get("certifications"):
+        persona_lines.append(f"Certifications: {', '.join(p['certifications'])}")
+    if p.get("process_areas"):
+        persona_lines.append(f"Process areas: {', '.join(p['process_areas'])}")
+    if p.get("tool_names"):
+        persona_lines.append(f"Tools: {p['tool_names']}")
+
     persona_block = "\n".join(persona_lines) if persona_lines else "No profile provided"
 
     prompt = f"""You are an expert semiconductor process engineer helping someone find the most relevant SOPs for their background.
@@ -73,28 +129,67 @@ User persona:
 Available SOPs:
 {doc_summaries}
 
-Return a JSON array where each element has:
-  "id": <document id as integer>,
-  "relevance_score": <float 0.0 to 1.0>,
-  "reason": <one sentence explaining why this SOP is relevant given their specific role and background>
+Return a valid JSON array.
 
-Consider their role, experience level, and process areas when scoring.
-Order from most to least relevant. Only include documents with score > 0.2.
-Return ONLY the JSON array, no other text."""
+Each element must have exactly these fields:
+  "id": document id as an integer
+  "relevance_score": float from 0.0 to 1.0
+  "reason": one sentence explaining why this SOP is relevant
+
+Rules:
+- Order from most to least relevant.
+- Only include documents with relevance_score > 0.2.
+- Return ONLY valid JSON.
+- Do not use markdown fences.
+- Do not include explanations outside the JSON.
+
+Example:
+[
+  {{
+    "id": 1,
+    "relevance_score": 0.85,
+    "reason": "This SOP is relevant because it matches the user's process area and experience level."
+  }}
+]
+"""
 
     raw = _chat(prompt)
-    ranked = json.loads(raw)
-    id_to_doc = {d["id"]: d for d in documents}
+    ranked = _parse_json_response(raw, fallback=[])
 
-    return [
-        {
-            "document": id_to_doc[item["id"]],
-            "relevance_score": item["relevance_score"],
-            "reason": item["reason"],
-        }
-        for item in ranked
-        if item["id"] in id_to_doc
-    ]
+    if not isinstance(ranked, list):
+        return []
+
+    id_to_doc = {d["id"]: d for d in documents}
+    results = []
+
+    for item in ranked:
+        if not isinstance(item, dict):
+            continue
+
+        doc_id = item.get("id")
+        if doc_id not in id_to_doc:
+            continue
+
+        try:
+            score = float(item.get("relevance_score", 0))
+        except (TypeError, ValueError):
+            score = 0.0
+
+        reason = item.get("reason", "")
+        if not isinstance(reason, str):
+            reason = str(reason)
+
+        if score > 0.2:
+            results.append(
+                {
+                    "document": id_to_doc[doc_id],
+                    "relevance_score": score,
+                    "reason": reason,
+                }
+            )
+
+    results.sort(key=lambda x: x["relevance_score"], reverse=True)
+    return results[:6] # Return maximum the top 6 results
 
 
 def suggest_change_propagation(
@@ -152,27 +247,80 @@ Only include documents that genuinely need a change. If none, return an empty ar
 Return ONLY the JSON array."""
 
     raw = _chat(prompt, max_tokens=2048)
-    return json.loads(raw)
+
+    import re as _re
+    raw = raw.strip()
+    raw = _re.sub(r"^```(?:json)?\s*", "", raw)
+    raw = _re.sub(r"\s*```$", "", raw)
+
+    try:
+        return json.loads(raw)
+    except Exception:
+        return []
 
 
-def generate_edit_suggestions(document: dict, edit_description: str) -> str:
+def generate_edit_suggestions(document: dict, edit_description: str) -> dict:
     """
     Given a document and a plain-English description of the desired edit,
-    return the full updated document content.
+    return a dict with:
+      "original_snippet"  — the exact text in the document that should change
+                            (empty string "" for pure additions)
+      "replacement"       — the replacement text (or the new content being added)
+      "full_content"      — the full updated document content
+      "summary"           — one-sentence description of what changed
+      "edit_type"         — "replace" | "add" | "delete"
     """
+    content = document["content"][:8000]
+
     prompt = f"""You are an expert manufacturing process engineer helping to update an SOP.
 
 DOCUMENT: {document['title']}
 CURRENT CONTENT:
-{document['content']}
+{content}
 
 REQUESTED CHANGE:
 {edit_description}
 
-Rewrite the document incorporating the requested change. Keep all other sections intact.
-Return ONLY the updated document content, no commentary."""
+Determine the edit type first:
+- "replace" — existing text is being changed or reworded
+- "add"     — new content is being inserted or appended (nothing removed)
+- "delete"  — content is being removed
 
-    return _chat(prompt, max_tokens=4096)
+Return a JSON object with these fields:
+  "edit_type":        "replace", "add", or "delete"
+  "original_snippet": for "replace"/"delete" — the exact verbatim text from the document that changes
+                      (copy character-for-character; keep it short — just the changed part)
+                      for "add" — empty string ""
+  "replacement":      for "replace" — the new text replacing original_snippet
+                      for "add"     — the full new content being added (e.g. the new section)
+                      for "delete"  — empty string ""
+  "full_content":     the complete updated document content with the change applied
+  "summary":          one sentence describing what was changed and why
+
+Examples:
+- "add a questions section at the end" → edit_type="add", original_snippet="", replacement="## Questions\\n\\n1. ...", full_content=<full doc + new section>
+- "change 200W to 180W" → edit_type="replace", original_snippet="200W", replacement="180W", full_content=<full doc with 200W→180W>
+- "remove the appendix" → edit_type="delete", original_snippet=<appendix text>, replacement="", full_content=<full doc without appendix>
+
+Return ONLY the JSON object, no markdown fences."""
+
+    raw = _chat(prompt, max_tokens=4096)
+
+    # Strip any accidental markdown fences
+    import re as _re
+    raw = _re.sub(r"^```(?:json)?\s*", "", raw.strip())
+    raw = _re.sub(r"\s*```$", "", raw)
+
+    try:
+        return json.loads(raw)
+    except Exception:
+        # Fallback: treat response as full content rewrite
+        return {
+            "original_snippet": "",
+            "replacement":      "",
+            "full_content":     raw,
+            "summary":          edit_description,
+        }
 
 
 # ── Role-based study guide ────────────────────────────────────────────────────
@@ -302,3 +450,151 @@ Write the study guide now. Use markdown with clear headings and bullet points.
 Do not copy the SOP verbatim — synthesise and explain it for your audience."""
 
     return _chat(prompt, max_tokens=2500)
+
+def generate_personalized_process_page(
+    process: dict,
+    user_profile: dict,
+    documents: list[dict],
+) -> dict:
+    """
+    Generate personalized process page content using:
+    - clicked process step
+    - user's saved persona
+    - SOP/document data for that process area
+
+    Returns JSON with:
+      process_summary
+      tool_summary
+      parameters
+      learning_focus
+      recommended_sops
+    """
+
+    def _join_list(value):
+        if isinstance(value, list):
+            return ", ".join(value)
+        return value or ""
+
+    persona_block = f"""
+Name: {user_profile.get("learner_name", "")}
+Current role: {user_profile.get("current_role", "")}
+Experience: {user_profile.get("experience_level", "")}
+Education: {user_profile.get("education", "")}
+Field of study: {user_profile.get("field_of_study", "")}
+Process areas: {_join_list(user_profile.get("process_areas", []))}
+Certifications: {_join_list(user_profile.get("certifications", []))}
+Tools: {user_profile.get("tool_names", "")}
+Target role: {user_profile.get("target_role", "")}
+Learning goal: {user_profile.get("learning_goal", "")}
+""".strip()
+
+    if documents:
+        docs_block = "\n\n".join(
+            f"""[DOC {d.get("id")}]
+Title: {d.get("title")}
+Process area: {d.get("process_area")}
+Tags: {_join_list(d.get("tags", []))}
+Content excerpt:
+{d.get("content", "")[:1800]}
+"""
+            for d in documents[:8]
+        )
+    else:
+        docs_block = "No matching SOP documents were found for this process."
+
+    prompt = f"""You are creating a personalized semiconductor process learning page.
+
+PROCESS:
+Title: {process["title"]}
+Short name: {process["short_name"]}
+Process area: {process["process_area"]}
+
+USER PERSONA:
+{persona_block}
+
+MATCHING SOP / DOCUMENT DATA:
+{docs_block}
+
+Create content for this process page. Personalize it to the user's background, role, education, tools, certifications, and target role.
+
+Return ONLY valid JSON with this exact shape:
+
+{{
+  "process_summary": "2 short paragraphs explaining this process for this user",
+  "tool_summary": "1-2 short paragraphs explaining the main tools and why they matter for this user",
+  "learning_focus": [
+    "specific thing this user should focus on",
+    "specific thing this user should focus on",
+    "specific thing this user should focus on"
+  ],
+  "parameters": [
+    {{
+      "parameter": "Parameter name",
+      "example_value": "Generic safe example or 'Tool/process dependent'",
+      "purpose": "Why this parameter matters",
+      "notes": "Safe note, no confidential recipe values"
+    }}
+  ],
+  "recommended_sops": [
+    {{
+      "id": 1,
+      "title": "Document title",
+      "reason": "Why this document is useful for this user"
+    }}
+  ]
+}}
+
+Rules:
+- Do NOT invent confidential recipe settings.
+- Do NOT include exact proprietary values.
+- Keep explanations practical and educational.
+- If documents are provided, base recommended_sops only on those documents.
+- Return at most 6 parameters.
+- Return at most 5 recommended_sops.
+- Return ONLY JSON. No markdown fences.
+"""
+
+    raw = _chat(prompt, max_tokens=2500)
+    parsed = _parse_json_response(raw, fallback=None)
+
+    if not isinstance(parsed, dict):
+        # Safe fallback so the page still works
+        return {
+            "process_summary": (
+                f"{process['title']} is an important step in the semiconductor process flow. "
+                "This page explains what the step does, what tools are involved, and which parameters matter."
+            ),
+            "tool_summary": (
+                "The tools used in this step control process conditions that affect wafer quality, repeatability, "
+                "and downstream results."
+            ),
+            "learning_focus": [
+                "Understand what this process changes on the wafer.",
+                "Learn which upstream steps affect this process.",
+                "Learn which downstream steps depend on this process.",
+            ],
+            "parameters": [
+                {
+                    "parameter": "Main process condition",
+                    "example_value": "Tool/process dependent",
+                    "purpose": "Controls the result of the process.",
+                    "notes": "Use documented SOP values only.",
+                }
+            ],
+            "recommended_sops": [
+                {
+                    "id": d.get("id"),
+                    "title": d.get("title"),
+                    "reason": "This SOP is related to the selected process area.",
+                }
+                for d in documents[:5]
+            ],
+        }
+
+    parsed.setdefault("process_summary", "")
+    parsed.setdefault("tool_summary", "")
+    parsed.setdefault("learning_focus", [])
+    parsed.setdefault("parameters", [])
+    parsed.setdefault("recommended_sops", [])
+
+    return parsed
