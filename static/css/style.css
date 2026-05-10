@@ -863,3 +863,48 @@ a, button { transition: color 0.15s, background-color 0.15s; }
   .site-logo      { font-size: 16px; }
   .site-nav-link  { font-size: 12px; }
 }
+
+.chat-bubble-ai p {
+  margin: 0 0 0.75rem 0;
+  line-height: 1.65;
+}
+
+.chat-bubble-ai p:last-child {
+  margin-bottom: 0;
+}
+
+.chat-bubble-ai ul,
+.chat-bubble-ai ol {
+  margin: 0.5rem 0 0.9rem 1.25rem;
+  padding-left: 1rem;
+}
+
+.chat-bubble-ai li {
+  margin: 0.35rem 0;
+  line-height: 1.6;
+}
+
+.chat-bubble-ai strong {
+  color: #111827;
+  font-weight: 700;
+}
+
+.chat-bubble-ai h1,
+.chat-bubble-ai h2,
+.chat-bubble-ai h3 {
+  color: #111827;
+  font-weight: 700;
+  margin: 1rem 0 0.5rem;
+}
+
+.chat-bubble-ai h1 {
+  font-size: 1.25rem;
+}
+
+.chat-bubble-ai h2 {
+  font-size: 1.1rem;
+}
+
+.chat-bubble-ai h3 {
+  font-size: 1rem;
+}

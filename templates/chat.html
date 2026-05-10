@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}Process Chat — SOP Hub{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+
+  <div class="mb-6">
+    <p class="text-sm font-semibold text-blue-600 uppercase tracking-wide">SOP Hub Chat</p>
+    <h1 class="text-3xl font-bold text-white mt-1">Ask questions about this process</h1>
+    <p id="chatProcessLine" class="text-sm text-gray-500 mt-2">
+      Loading process context…
+    </p>
+  </div>
+
+  <section class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
+    <div id="chatMessages" class="space-y-4 min-h-[360px] max-h-[520px] overflow-y-auto pr-2">
+      <div class="rounded-xl bg-blue-50 border border-blue-100 p-4 text-sm text-gray-700">
+        Ask me about this process, related SOPs, parameters, safety concerns, or what to learn next.
+      </div>
+    </div>
+
+    <form id="chatForm" class="mt-5 flex gap-3">
+      <input
+        id="chatInput"
+        type="text"
+        class="flex-1 rounded-lg border border-gray-200 px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+        placeholder="Example: What should I focus on as a new process engineer?"
+        autocomplete="off"
+      />
+      <button
+        type="submit"
+        class="rounded-lg bg-blue-600 text-white px-5 py-3 text-sm font-semibold hover:bg-blue-700">
+        Send
+      </button>
+    </form>
+  </section>
+
+  <div id="chatSources" class="mt-5 text-sm text-gray-500"></div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/chat.js') }}"></script>
+{% endblock %}

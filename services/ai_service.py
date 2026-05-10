@@ -458,70 +458,146 @@ def generate_personalized_process_page(
 ) -> dict:
     """
     Generate personalized process page content using:
-    - clicked process step
-    - user's saved persona
-    - SOP/document data for that process area
+    - selected process step
+    - user persona
+    - matching SOP/database documents
 
-    Returns JSON with:
+    Returns:
       process_summary
       tool_summary
-      parameters
       learning_focus
+      parameters
       recommended_sops
     """
 
-    def _join_list(value):
+    def join_list(value):
         if isinstance(value, list):
-            return ", ".join(value)
+            return ", ".join(str(v) for v in value)
         return value or ""
 
-    persona_block = f"""
-Name: {user_profile.get("learner_name", "")}
-Current role: {user_profile.get("current_role", "")}
-Experience: {user_profile.get("experience_level", "")}
-Education: {user_profile.get("education", "")}
-Field of study: {user_profile.get("field_of_study", "")}
-Process areas: {_join_list(user_profile.get("process_areas", []))}
-Certifications: {_join_list(user_profile.get("certifications", []))}
-Tools: {user_profile.get("tool_names", "")}
-Target role: {user_profile.get("target_role", "")}
-Learning goal: {user_profile.get("learning_goal", "")}
-""".strip()
+    def get_years_text(experience_level: str) -> str:
+        """
+        Convert your dropdown experience labels into approximate readable years.
+        This does not need to be perfect; it is just for prompt personalization.
+        """
+        if not experience_level:
+            return "unknown"
 
-    if documents:
-        docs_block = "\n\n".join(
+        exp = experience_level.lower()
+
+        if "none" in exp:
+            return "0"
+        if "less than 6" in exp:
+            return "less than 0.5"
+        if "6–12" in exp or "6-12" in exp:
+            return "0.5 to 1"
+        if "1–2" in exp or "1-2" in exp:
+            return "1 to 2"
+        if "3–5" in exp or "3-5" in exp:
+            return "3 to 5"
+        if "6–10" in exp or "6-10" in exp:
+            return "6 to 10"
+        if "10+" in exp:
+            return "10+"
+
+        return experience_level
+
+    learner_background = user_profile.get("field_of_study") or user_profile.get("education") or "general technical"
+    years_experience = get_years_text(user_profile.get("experience_level", ""))
+    previous_processes = join_list(user_profile.get("process_areas", [])) or "no prior process areas listed"
+    previous_tools = user_profile.get("tool_names", "") or "no prior tools listed"
+    current_role = user_profile.get("current_role", "") or "learner"
+    target_role = user_profile.get("target_role", "") or "not specified"
+    learning_goal = user_profile.get("learning_goal", "") or "understand the process"
+    certifications = join_list(user_profile.get("certifications", [])) or "no listed certifications"
+
+    doc_lines = []
+    for d in documents[:8]:
+        doc_lines.append(
             f"""[DOC {d.get("id")}]
-Title: {d.get("title")}
-Process area: {d.get("process_area")}
-Tags: {_join_list(d.get("tags", []))}
+Title: {d.get("title", "")}
+Document type: {d.get("doc_type", "")}
+Step: {d.get("step_name", "")}
+Step type: {d.get("step_type_name", "")}
+Process area: {d.get("process_area", "")}
+Tags: {join_list(d.get("tags", []))}
 Content excerpt:
-{d.get("content", "")[:1800]}
+{(d.get("content") or "")[:1600]}
 """
-            for d in documents[:8]
         )
-    else:
-        docs_block = "No matching SOP documents were found for this process."
 
-    prompt = f"""You are creating a personalized semiconductor process learning page.
+    docs_block = "\n\n".join(doc_lines) if doc_lines else "No matching SOP documents found."
 
-PROCESS:
-Title: {process["title"]}
-Short name: {process["short_name"]}
-Process area: {process["process_area"]}
+    prompt = f"""
+You are creating a personalized semiconductor process page for SOP Hub.
 
-USER PERSONA:
-{persona_block}
+The selected process is:
+PROCESS NAME: {process.get("short_name", "")}
+FULL PROCESS TITLE: {process.get("title", "")}
+PROCESS AREA: {process.get("process_area", "")}
 
-MATCHING SOP / DOCUMENT DATA:
+User persona:
+- Current role: {current_role}
+- Background: {learner_background}
+- Years of semiconductor experience: {years_experience}
+- Previously worked on these semiconductor processes: {previous_processes}
+- Previously worked with these tools: {previous_tools}
+- Certifications/training: {certifications}
+- Target role: {target_role}
+- Main learning goal: {learning_goal}
+
+Relevant SOP/document context from our database:
 {docs_block}
 
-Create content for this process page. Personalize it to the user's background, role, education, tools, certifications, and target role.
+Write content for a personalized process page.
 
-Return ONLY valid JSON with this exact shape:
+PROCESS OVERVIEW INSTRUCTIONS:
+Please write a short summary about {process.get("short_name", "")} during semiconductor fabrication.
+Tune it for someone with a {learner_background} background with {years_experience} years of experience in semiconductors.
+They have worked on {previous_processes} semiconductor processes previously.
+
+With higher years of experience, provide more nuance about the role of this process in developing a chip than just baseline understanding.
+
+The process summary should have this structure:
+1. 1–2 sentences: overview of the process and its role in creating a semiconductor.
+2. 1 sentence: importance of the step and its connection to nearby/upstream/downstream fabrication processes.
+3. Short bullet-style phrasing about types or variations of the process.
+4. A short example of what is done in this process, tuned to the user's {learner_background} background.
+
+If the user has less experience or no experience, include a brief note about what they might find interesting based on their current field/background.
+
+TOOL OVERVIEW INSTRUCTIONS:
+For the {process.get("short_name", "")} semiconductor fabrication process, provide a concise overview of how a representative machine works.
+Use a machine from MIT.nano as the baseline when possible, but do not invent exact model details if the SOP context does not provide them.
+Provide:
+1. 1 sentence overview of how the tool works.
+2. 1 sentence about a unique feature or thing to watch out for.
+3. 1 sentence about what someone with a {learner_background} background might find particularly interesting.
+The user has {years_experience} years of experience and has previously worked with {previous_tools} tools.
+If the user has more experience, provide more detail on how the machine works and other similar processes/tools.
+
+PARAMETER TABLE INSTRUCTIONS:
+Provide a table where:
+- column 1 is parameter
+- column 2 is purpose
+- column 3 is range of values or options that should be specified for the process
+
+For example, for sputter:
+parameter = Material
+options = Pt, Ti, Ag, Au, etc.
+
+IMPORTANT SAFETY/CONFIDENTIALITY RULES:
+- Do not invent confidential recipe settings.
+- Do not provide exact proprietary values.
+- Use generic safe ranges/options like "tool/process dependent" when exact SOP values are unavailable.
+- Base recommended SOPs only on the provided document list.
+- Keep the writing concise and suitable for a web page.
+
+Return ONLY valid JSON with this exact structure:
 
 {{
-  "process_summary": "2 short paragraphs explaining this process for this user",
-  "tool_summary": "1-2 short paragraphs explaining the main tools and why they matter for this user",
+  "process_summary": "HTML-free text. Can include short paragraphs and bullet-style lines using plain text.",
+  "tool_summary": "HTML-free text. 1 short paragraph.",
   "learning_focus": [
     "specific thing this user should focus on",
     "specific thing this user should focus on",
@@ -530,55 +606,47 @@ Return ONLY valid JSON with this exact shape:
   "parameters": [
     {{
       "parameter": "Parameter name",
-      "example_value": "Generic safe example or 'Tool/process dependent'",
       "purpose": "Why this parameter matters",
-      "notes": "Safe note, no confidential recipe values"
+      "example_value": "Generic range/options/value"
     }}
   ],
   "recommended_sops": [
     {{
       "id": 1,
       "title": "Document title",
-      "reason": "Why this document is useful for this user"
+      "reason": "Why this SOP is useful for this user"
     }}
   ]
 }}
 
-Rules:
-- Do NOT invent confidential recipe settings.
-- Do NOT include exact proprietary values.
-- Keep explanations practical and educational.
-- If documents are provided, base recommended_sops only on those documents.
-- Return at most 6 parameters.
-- Return at most 5 recommended_sops.
-- Return ONLY JSON. No markdown fences.
+Return at most 6 parameters.
+Return at most 5 recommended_sops.
+Return ONLY JSON. No markdown fences.
 """
 
-    raw = _chat(prompt, max_tokens=2500)
+    raw = _chat(prompt, max_tokens=3000)
     parsed = _parse_json_response(raw, fallback=None)
 
     if not isinstance(parsed, dict):
-        # Safe fallback so the page still works
         return {
             "process_summary": (
-                f"{process['title']} is an important step in the semiconductor process flow. "
-                "This page explains what the step does, what tools are involved, and which parameters matter."
+                f"{process.get('title', 'This process')} is part of the semiconductor fabrication flow. "
+                "It affects wafer quality, repeatability, and downstream processing."
             ),
             "tool_summary": (
-                "The tools used in this step control process conditions that affect wafer quality, repeatability, "
-                "and downstream results."
+                "The tools used in this area control important process conditions. "
+                "Understanding those conditions helps connect SOP steps to real wafer outcomes."
             ),
             "learning_focus": [
                 "Understand what this process changes on the wafer.",
-                "Learn which upstream steps affect this process.",
-                "Learn which downstream steps depend on this process.",
+                "Learn which parameters are safety-critical and quality-critical.",
+                "Connect this process to upstream and downstream steps.",
             ],
             "parameters": [
                 {
                     "parameter": "Main process condition",
-                    "example_value": "Tool/process dependent",
                     "purpose": "Controls the result of the process.",
-                    "notes": "Use documented SOP values only.",
+                    "example_value": "Tool/process dependent",
                 }
             ],
             "recommended_sops": [

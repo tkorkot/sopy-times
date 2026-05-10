@@ -497,6 +497,20 @@ if (docList) {
         }
       }
 
+      // Inject process + tool images sourced from extracted PDF images
+      function _setProcessImg(imgId, placeholderId, url) {
+        const img = document.getElementById(imgId);
+        const ph  = document.getElementById(placeholderId);
+        if (!img) return;
+        if (url) {
+          img.src = url;
+        } else if (ph) {
+          ph.querySelector("p:last-child").textContent = "No image available yet.";
+        }
+      }
+      _setProcessImg("processImg", "processImgPlaceholder", data.process_image_url);
+      _setProcessImg("toolImg",    "toolImgPlaceholder",    data.tool_image_url);
+
       const processSopList = document.getElementById("processSopList");
       if (processSopList) {
         const sops = data.recommended_sops || [];

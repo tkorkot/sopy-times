@@ -1,5 +1,5 @@
 from pathlib import Path
-from flask import Flask, render_template, send_file, abort
+from flask import Flask, render_template, send_file, abort, request, jsonify
 from config import Config
 from database.db import db
 from routes.documents import documents_bp
@@ -132,12 +132,28 @@ def create_app():
 
         profile = request.get_json(silent=True) or {}
 
-        from database.models import Document
+        from sqlalchemy import or_
+        from database.models import Document, Step, StepType
         from services.ai_service import generate_personalized_process_page
+
+        possible_names = [
+            process_meta["title"],        # e.g. "Deposition / Film Formation"
+            process_meta["short_name"],   # e.g. "Deposition"
+            process_meta["process_area"], # e.g. "Deposition / Film Formation"
+        ]
 
         docs = (
             db.session.query(Document)
-            .filter(Document.process_area == process_meta["process_area"])
+            .outerjoin(Step, Document.step_id == Step.id)
+            .outerjoin(StepType, Document.step_type_id == StepType.id)
+            .filter(Document.doc_type == "SOP")
+            .filter(
+                or_(
+                    Step.name.in_(possible_names),
+                    StepType.name.in_(possible_names),
+                    Document.process_area.in_(possible_names),
+                )
+            )
             .all()
         )
 
@@ -147,11 +163,29 @@ def create_app():
                 "id": doc.id,
                 "title": getattr(doc, "title", ""),
                 "process_area": getattr(doc, "process_area", ""),
+                "doc_type": getattr(doc, "doc_type", ""),
                 "tags": getattr(doc, "tags", []) or [],
                 "content": (getattr(doc, "content", "") or "")[:2500],
                 "coral_name": getattr(doc, "coral_name", ""),
                 "location": getattr(doc, "location", ""),
+                "step_name": doc.step.name if getattr(doc, "step", None) else "",
+                "step_type_name": doc.step_type.name if getattr(doc, "step_type", None) else "",
             })
+
+        print("PROCESS:", process_slug)
+        print("POSSIBLE NAMES:", possible_names)
+        print("MATCHED SOP DOCS:", len(doc_payload))
+        print([
+            (
+                d["id"],
+                d["title"],
+                d["doc_type"],
+                d["step_name"],
+                d["step_type_name"],
+                d["process_area"],
+            )
+            for d in doc_payload[:10]
+        ])
 
         generated = generate_personalized_process_page(
             process=process_meta,
@@ -161,6 +195,39 @@ def create_app():
 
         generated["process"] = process_meta
         generated["documents"] = doc_payload[:8]
+
+        # Force real clickable SOPs from your database.
+        generated["recommended_sops"] = [
+            {
+                "id": d["id"],
+                "title": d["title"],
+                "reason": f"Related to {process_meta['short_name']} through {d.get('step_type_name') or d.get('step_name') or 'this process step'}."
+            }
+            for d in doc_payload
+        ][:8]
+
+        # Pull images from the DocumentImage records tied to each matched SOP
+        from database.models import DocumentImage as _DocImg
+        doc_ids = [d["id"] for d in doc_payload]
+        process_image_url = None
+        tool_image_url = None
+
+        if doc_ids:
+            sop_imgs = (
+                _DocImg.query
+                .filter(_DocImg.document_id.in_(doc_ids))
+                .order_by(_DocImg.document_id, _DocImg.doc_position)
+                .all()
+            )
+            if sop_imgs:
+                process_image_url = f"/static/doc_images/{sop_imgs[0].document_id}/{sop_imgs[0].filename}"
+            if len(sop_imgs) > 1:
+                tool_image_url = f"/static/doc_images/{sop_imgs[1].document_id}/{sop_imgs[1].filename}"
+            elif sop_imgs:
+                tool_image_url = process_image_url
+
+        generated["process_image_url"] = process_image_url
+        generated["tool_image_url"] = tool_image_url
 
         return jsonify(generated)
 
@@ -188,9 +255,76 @@ def create_app():
             "root_path":   app.root_path,
             "tried":       [str(c) for c in candidates],
         }), 404
+    @app.route("/chatbot")
+    def chatbot():
+        return render_template("chat.html")
 
-    with app.app_context():
-        db.create_all()
+        with app.app_context():
+            db.create_all()
+    @app.route("/api/chat/process/<process_slug>", methods=["POST"])
+    def process_chat(process_slug):
+        process_meta = PROCESS_META.get(process_slug)
+
+        if not process_meta:
+            return jsonify({"error": "Unknown process"}), 404
+
+        payload = request.get_json(silent=True) or {}
+
+        user_profile = payload.get("user_profile") or {}
+        message = payload.get("message") or ""
+        chat_history = payload.get("chat_history") or []
+
+        from sqlalchemy import or_
+        from database.models import Document, Step, StepType
+        from services.chatbot_service import answer_process_chat
+
+        possible_names = [
+            process_meta["title"],
+            process_meta["short_name"],
+            process_meta["process_area"],
+        ]
+
+        docs = (
+            db.session.query(Document)
+            .outerjoin(Step, Document.step_id == Step.id)
+            .outerjoin(StepType, Document.step_type_id == StepType.id)
+            .filter(
+                or_(
+                    Step.name.in_(possible_names),
+                    StepType.name.in_(possible_names),
+                    Document.process_area.in_(possible_names),
+                )
+            )
+            .all()
+        )
+
+        doc_payload = []
+        for doc in docs:
+            doc_payload.append({
+                "id": doc.id,
+                "title": getattr(doc, "title", ""),
+                "process_area": getattr(doc, "process_area", ""),
+                "doc_type": getattr(doc, "doc_type", ""),
+                "tags": getattr(doc, "tags", []) or [],
+                "content": (getattr(doc, "content", "") or "")[:3000],
+                "coral_name": getattr(doc, "coral_name", ""),
+                "location": getattr(doc, "location", ""),
+                "step_name": doc.step.name if getattr(doc, "step", None) else "",
+                "step_type_name": doc.step_type.name if getattr(doc, "step_type", None) else "",
+            })
+
+        print("CHAT PROCESS:", process_slug)
+        print("CHAT MATCHED DOCS:", len(doc_payload))
+
+        result = answer_process_chat(
+            process=process_meta,
+            user_profile=user_profile,
+            documents=doc_payload,
+            message=message,
+            chat_history=chat_history,
+        )
+
+        return jsonify(result)
 
     return app
 

@@ -19,7 +19,7 @@
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
       <div>
         <div class="flex items-center justify-between mb-3">
-          <h2 class="text-xl font-semibold text-gray-900">Process Summary</h2>
+          <h2 class="text-xl font-semibold">Process Summary</h2>
         </div>
 
         <div id="processSummaryText" class="space-y-4 text-sm leading-7 text-gray-700">
@@ -31,16 +31,15 @@
         <h3 class="text-sm font-semibold text-gray-700 mb-3">Process Image</h3>
         <div class="border-2 border-dashed border-blue-200 rounded-xl bg-blue-50 p-6 text-center min-h-[260px] flex items-center justify-center">
           <img
-            src="{{ url_for('static', filename=process.process_image) }}"
+            id="processImg"
+            src=""
             alt="{{ process.title }} process diagram"
             class="hidden max-h-[300px] mx-auto rounded-lg border border-gray-200 bg-white object-contain"
             onload="this.classList.remove('hidden'); this.nextElementSibling.classList.add('hidden');"
           />
-          <div class="text-blue-700">
-            <p class="font-medium mb-1">Process image placeholder</p>
-            <p class="text-xs text-gray-500">
-              Add image at <code>static/{{ process.process_image }}</code>
-            </p>
+          <div id="processImgPlaceholder" class="text-blue-700">
+            <p class="font-medium mb-1">Process image</p>
+            <p class="text-xs text-gray-500">Loading from SOP documents…</p>
           </div>
         </div>
       </div>
@@ -51,26 +50,25 @@
   <section class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
       <div>
-        <h2 class="text-xl font-semibold text-gray-900 mb-3">Tool Image</h2>
+        <h2 class="text-xl font-semibold text-white mb-3">Tool Image</h2>
         <div class="border-2 border-dashed border-purple-200 rounded-xl bg-purple-50 p-6 text-center min-h-[260px] flex items-center justify-center">
           <img
-            src="{{ url_for('static', filename=process.tool_image) }}"
+            id="toolImg"
+            src=""
             alt="{{ process.title }} tool"
             class="hidden max-h-[300px] mx-auto rounded-lg border border-gray-200 bg-white object-contain"
             onload="this.classList.remove('hidden'); this.nextElementSibling.classList.add('hidden');"
           />
-          <div class="text-purple-700">
-            <p class="font-medium mb-1">Tool image placeholder</p>
-            <p class="text-xs text-gray-500">
-              Add image at <code>static/{{ process.tool_image }}</code>
-            </p>
+          <div id="toolImgPlaceholder" class="text-purple-700">
+            <p class="font-medium mb-1">Tool image</p>
+            <p class="text-xs text-gray-500">Loading from SOP documents…</p>
           </div>
         </div>
       </div>
 
       <div>
         <div class="flex items-center justify-between mb-3">
-          <h2 class="text-xl font-semibold text-gray-900">Tool Summary</h2>
+          <h2 class="text-xl font-semibold text-white">Tool Summary</h2>
         </div>
 
         <div id="toolSummaryText" class="space-y-4 text-sm leading-7 text-gray-700">
@@ -82,7 +80,7 @@
 
   <!-- Learning focus -->
   <section class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
-    <h2 class="text-xl font-semibold text-gray-900 mb-3">What You Should Focus On</h2>
+    <h2 class="text-xl font-semibold text-white mb-3">What You Should Focus On</h2>
     <ul id="learningFocusList" class="list-disc pl-5 text-sm leading-7 text-gray-700">
       <li class="text-gray-400">Loading personalized learning focus…</li>
     </ul>
@@ -92,7 +90,7 @@
   <section class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
     <div class="flex items-center justify-between mb-4">
       <div>
-        <h2 class="text-xl font-semibold text-gray-900">Process Parameters</h2>
+        <h2 class="text-xl font-semibold text-white">Process Parameters</h2>
         <p class="text-sm text-gray-500 mt-1">
           Generic, non-confidential parameters relevant to {{ process.short_name }}.
         </p>
@@ -122,7 +120,7 @@
 
   <!-- Recommended SOPs -->
   <section class="mt-6 bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-    <h2 class="text-xl font-semibold text-gray-900 mb-3">Recommended SOPs for This Process</h2>
+    <h2 class="text-xl font-semibold text-white mb-3">Recommended SOPs for This Process</h2>
     <div id="processSopList" class="grid grid-cols-1 md:grid-cols-2 gap-4">
       <p class="text-sm text-gray-400">Loading matching SOPs…</p>
     </div>
@@ -152,7 +150,7 @@
         </p>
       </a>
 
-      <a href="/chat"
+      <a href="/chatbot?process={{ process_slug }}"
         class="rounded-xl border border-purple-200 bg-purple-50 hover:bg-purple-100 transition p-5 group">
         <h3 class="font-semibold text-gray-900 group-hover:text-purple-700 transition">
           Ask Questions
