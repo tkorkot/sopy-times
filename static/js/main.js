@@ -208,7 +208,7 @@ if (docList) {
         // Only show the type sub-header if it differs from the step name
         if (typeName !== stepName && typeName !== "General") {
           const typeHeader = document.createElement("h3");
-          typeHeader.className = "text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 ml-1";
+          typeHeader.className = "text-xs font-semibold text-white uppercase tracking-wide mb-2 ml-1";
           typeHeader.textContent = typeName;
           typeSection.appendChild(typeHeader);
         }

@@ -518,10 +518,13 @@ function triggerSummary() {
 document.getElementById("generateSummaryBtn")?.addEventListener("click", triggerSummary);
 
 document.getElementById("generateSummaryBtnSidebar").addEventListener("click", async () => {
-  const role    = document.getElementById("roleSelect").value;
-  const status  = document.getElementById("summaryStatus");
-  const profile = JSON.parse(sessionStorage.getItem("userProfile") || "{}");
+  const role         = document.getElementById("roleSelect").value;
+  const status       = document.getElementById("summaryStatus");
+  const errorEl      = document.getElementById("summaryError");
+  const extraContext = document.getElementById("studyGuideContext").value.trim();
+  const profile      = JSON.parse(sessionStorage.getItem("userProfile") || "{}");
 
+  errorEl.classList.add("hidden");
   status.classList.remove("hidden");
   document.getElementById("generateSummaryBtnSidebar").disabled = true;
 
@@ -529,15 +532,24 @@ document.getElementById("generateSummaryBtnSidebar").addEventListener("click", a
     const res = await fetch(`/api/summaries/${DOC_ID}`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ role, user_profile: profile }),
+      body: JSON.stringify({ role, user_profile: profile, extra_context: extraContext }),
     });
+
+    if (!res.ok) {
+      throw new Error(`Server error ${res.status}`);
+    }
+
     const data = await res.json();
+    if (data.error) throw new Error(data.error);
 
     document.getElementById("summaryModalTitle").textContent = `${data.role_label} Study Guide`;
     document.getElementById("summaryModalSubtitle").textContent = currentDoc?.title || "";
     document.getElementById("summaryContent").innerHTML = marked.parse(data.summary);
     document.getElementById("summaryModal").classList.remove("hidden");
     document.body.style.overflow = "hidden";
+  } catch (err) {
+    errorEl.textContent = `Failed to generate: ${err.message}`;
+    errorEl.classList.remove("hidden");
   } finally {
     status.classList.add("hidden");
     document.getElementById("generateSummaryBtnSidebar").disabled = false;
@@ -556,6 +568,35 @@ document.getElementById("copySummaryBtn").addEventListener("click", () => {
     btn.textContent = "Copied!";
     setTimeout(() => btn.textContent = "Copy", 2000);
   });
+});
+
+document.getElementById("printSummaryBtn").addEventListener("click", () => {
+  const title   = document.getElementById("summaryModalTitle").textContent;
+  const docName = document.getElementById("summaryModalSubtitle").textContent;
+  const content = document.getElementById("summaryContent").innerHTML;
+  const win = window.open("", "_blank", "width=800,height=900");
+  win.document.write(`<!DOCTYPE html><html><head>
+    <meta charset="utf-8">
+    <title>${title}</title>
+    <style>
+      body { font-family: system-ui, sans-serif; max-width: 700px; margin: 40px auto; color: #1f2937; line-height: 1.6; }
+      h1 { font-size: 1.25rem; margin-bottom: 0.25rem; }
+      .sub { color: #6b7280; font-size: 0.8rem; margin-bottom: 1.5rem; border-bottom: 1px solid #e5e7eb; padding-bottom: 0.75rem; }
+      h2 { font-size: 1rem; font-weight: 600; margin-top: 1.5rem; margin-bottom: 0.5rem; }
+      h3 { font-size: 0.9rem; font-weight: 600; color: #7c3aed; margin-top: 1rem; margin-bottom: 0.25rem; }
+      ul, ol { padding-left: 1.5rem; } li { margin: 0.2rem 0; }
+      blockquote { border-left: 3px solid #a855f7; background: #faf5ff; padding: 0.5rem 1rem; margin: 0.75rem 0; color: #581c87; border-radius: 0 0.25rem 0.25rem 0; }
+      table { border-collapse: collapse; width: 100%; font-size: 0.85rem; } th, td { border: 1px solid #d1d5db; padding: 0.4rem 0.6rem; text-align: left; } th { background: #f3f4f6; }
+      code { background: #f3f4f6; padding: 0.1rem 0.3rem; border-radius: 0.25rem; font-size: 0.85em; }
+      strong { color: #111827; }
+    </style>
+  </head><body>
+    <h1>${title}</h1><p class="sub">${docName}</p>
+    ${content}
+  </body></html>`);
+  win.document.close();
+  win.focus();
+  setTimeout(() => win.print(), 400);
 });
 
 /* ── Change History ──────────────────────────────────── */

@@ -206,25 +206,40 @@ def create_app():
             for d in doc_payload
         ][:8]
 
-        # Pull images from the DocumentImage records tied to each matched SOP
+        # Pull images from the DocumentImage records tied to each matched SOP.
+        # Skip: (1) the first image per document (always the MIT.nano logo header)
+        #        (2) barcodes — short-height, very wide images (height < 200, ratio > 3:1)
         from database.models import DocumentImage as _DocImg
         doc_ids = [d["id"] for d in doc_payload]
         process_image_url = None
         tool_image_url = None
 
+        def _is_junk(img):
+            w = img.width or 0
+            h = img.height or 1
+            return h < 200 and (w / h) > 3.0
+
         if doc_ids:
-            sop_imgs = (
+            all_sop_imgs = (
                 _DocImg.query
                 .filter(_DocImg.document_id.in_(doc_ids))
                 .order_by(_DocImg.document_id, _DocImg.doc_position)
                 .all()
             )
-            if sop_imgs:
-                process_image_url = f"/static/doc_images/{sop_imgs[0].document_id}/{sop_imgs[0].filename}"
-            if len(sop_imgs) > 1:
-                tool_image_url = f"/static/doc_images/{sop_imgs[1].document_id}/{sop_imgs[1].filename}"
-            elif sop_imgs:
-                tool_image_url = process_image_url
+            seen_docs = set()
+            usable = []
+            for img in all_sop_imgs:
+                if img.document_id not in seen_docs:
+                    seen_docs.add(img.document_id)  # first image per doc = logo, skip
+                    continue
+                if _is_junk(img):
+                    continue
+                usable.append(img)
+
+            if usable:
+                process_image_url = f"/static/doc_images/{usable[0].document_id}/{usable[0].filename}"
+            if len(usable) > 1:
+                tool_image_url = f"/static/doc_images/{usable[1].document_id}/{usable[1].filename}"
 
         generated["process_image_url"] = process_image_url
         generated["tool_image_url"] = tool_image_url

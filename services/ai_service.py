@@ -326,69 +326,83 @@ Return ONLY the JSON object, no markdown fences."""
 # ── Role-based study guide ────────────────────────────────────────────────────
 
 _ROLE_INSTRUCTIONS = {
-    "technician": """You are writing a practical cheat-sheet for a **lab technician** who will operate this equipment hands-on every day.
-Focus on:
-- A short plain-English summary of what the process does and why it matters
-- The procedure steps distilled into a quick-reference checklist
-- Critical safety rules (PPE, hazards) in plain language — no jargon
-- The most common mistakes and how to avoid them
-- What to do if something looks wrong (alarms, unexpected readings)
-Skip deep engineering theory. Use bullet points and short sentences.""",
+    "technician": """You are writing a practical cheat-sheet for a **lab technician** who operates this equipment hands-on every day.
+
+Sections to include (use `##` headings):
+- **What This Process Does** — one plain-English paragraph, no jargon
+- **Step-by-Step Checklist** — numbered list, each step ≤ 15 words
+- **Critical Safety Rules** — PPE required, key hazards, emergency actions as `> blockquote` callouts
+- **Common Mistakes & How to Avoid Them** — bullet list of pitfalls
+- **Troubleshooting Quick-Reference** — short table or bullet list: symptom → likely cause → action
+
+Skip deep engineering theory. Write for someone who will reference this guide mid-task.""",
 
     "process_engineer": """You are writing a technical reference for a **process engineer** who owns and optimises this process.
-Focus on:
-- All process parameters, tolerances, and specifications in one place
-- Quality control criteria and measurement methods
-- How this step connects to upstream and downstream processes
-- Which parameters can be tuned and what effect each has
-- Failure modes and their root causes
-Include tables where useful.""",
 
-    "mechanical_engineer": """You are writing a summary for a **mechanical engineer** who needs to understand the equipment.
-Focus on:
-- Equipment description — mechanical components, how they work, what they do
-- Relevant physical specs (pressures, forces, temperatures, flow rates, tolerances)
-- Mechanical interlocks and safety mechanisms
-- Maintenance requirements and failure modes
-- Any mechanical setup or alignment steps in the procedure
-Skip chemistry and electrical details unless they interact with mechanical components.""",
+Sections to include (use `##` headings):
+- **Process Overview** — what it does, why it matters, upstream/downstream connections
+- **Key Parameters & Specifications** — table: Parameter | Typical Range | Why It Matters
+- **Quality Control & Acceptance Criteria** — what a passing result looks like, how to measure it
+- **Tuning Guide** — which knobs to turn and the effect of each change
+- **Failure Modes & Root Causes** — table or bullet list: symptom → root cause → corrective action
 
-    "electrical_engineer": """You are writing a summary for an **electrical engineer** focused on the control and power systems.
-Focus on:
-- Power requirements and supply specs
-- Control system overview (panel, interlocks, sensors, actuators)
-- Any software or PLC interfaces
-- Electrical safety requirements
-- Signal flows (e.g. how the thermocouple feeds back to the controller)
-Skip chemistry and materials unless they affect electrical components.""",
+Include tables wherever they make data easier to scan.""",
 
-    "student": """You are writing a **study guide** for a student encountering this process for the first time.
-Include:
-- What this process is and the scientific/engineering principle behind it (explain the physics or chemistry simply)
-- Why each major parameter matters (e.g. why that specific pressure or temperature)
-- Key vocabulary and terms defined in plain English
-- A numbered summary of what happens step by step in the procedure
-- 3–5 "exam-style" questions a student should be able to answer after reading this SOP
-Make it educational, not just descriptive.""",
+    "mechanical_engineer": """You are writing a summary for a **mechanical engineer** who needs to understand the equipment design and maintenance.
+
+Sections to include (use `##` headings):
+- **Equipment Description** — mechanical components, how they interact, what each does
+- **Physical Specifications** — pressures, forces, temperatures, flow rates, tolerances (use a table or bullet list)
+- **Mechanical Interlocks & Safety Mechanisms** — what they protect against and how they work
+- **Setup & Alignment Steps** — any mechanical preparation required before operation
+- **Maintenance & Failure Modes** — scheduled maintenance tasks, signs of wear, common mechanical failures
+
+Skip chemistry and electrical details unless they directly drive a mechanical requirement.""",
+
+    "electrical_engineer": """You are writing a summary for an **electrical engineer** focused on the control and power systems of this equipment.
+
+Sections to include (use `##` headings):
+- **Power & Supply Requirements** — voltages, currents, power ratings, supply types
+- **Control System Overview** — panel layout, interlocks, sensors, actuators, any PLC or software interface
+- **Signal & Feedback Flows** — how sensors (thermocouples, pressure transducers, etc.) connect to controllers
+- **Electrical Safety Requirements** — lockout/tagout, grounding, arc-flash considerations
+- **Known Electrical Failure Modes** — symptoms, diagnostics, remedies
+
+Skip chemistry and materials unless they create electrical requirements (e.g. corrosive gases near wiring).""",
+
+    "student": """You are writing an **educational study guide** for a student encountering this process for the first time.
+
+Sections to include (use `##` headings):
+- **The Science Behind It** — explain the underlying physics or chemistry in plain English with analogies
+- **Why the Parameters Matter** — for each key parameter, explain *why* it is set the way it is (not just what it is)
+- **Glossary** — define the 5–8 most important terms a student must know, in plain English
+- **Process Walk-Through** — numbered sequence of what happens step-by-step (focus on understanding, not operating)
+- **Test Yourself** — 4–5 numbered exam-style questions covering concepts, not just facts; include the answer in collapsed `> Answer:` blockquotes
+
+Make it educational and engaging — a student should be able to explain this process to a friend after reading.""",
 
     "new_employee": """You are writing an **onboarding guide** for someone new to this lab or company who will work near or with this process.
-Include:
-- A plain-English overview: what this process does and where it fits in the bigger picture
-- The key safety rules they must know before setting foot near the equipment
-- Who to talk to if they have questions (refer to Contact field)
-- What qualifications or training they need before they can operate it
-- A short glossary of the most important terms
-Keep it welcoming and jargon-free.""",
 
-    "safety_officer": """You are writing a **safety summary** for a safety officer auditing this process.
-Focus exclusively on:
-- All required PPE, listed clearly
-- Every identified hazard and the corresponding control measure
-- Emergency procedures (spill, exposure, equipment failure)
-- Required training and qualifications before operation
-- Things that are explicitly prohibited
-- Any chemicals, voltages, or pressures that exceed standard thresholds
-Format as a structured checklist where possible.""",
+Sections to include (use `##` headings):
+- **Welcome: What This Process Does** — plain-English overview, no assumed knowledge
+- **Where It Fits** — one sentence each on what happens before and after this step
+- **Before You Touch Anything** — key safety rules and mandatory training/qualifications as `> blockquote` callouts
+- **Who To Ask** — reference the Contact field; note what kinds of questions each role can answer
+- **Glossary of Key Terms** — 6–8 terms this newcomer will hear constantly, defined simply
+
+Keep the tone welcoming and the language jargon-free. Prioritise safety and clarity over completeness.""",
+
+    "safety_officer": """You are writing a **safety audit summary** for a safety officer reviewing this process for compliance.
+
+Sections to include (use `##` headings):
+- **Required PPE** — checklist with each item and why it is needed
+- **Identified Hazards & Controls** — table: Hazard | Risk Level | Control Measure
+- **Prohibited Actions** — explicit list of what must never be done
+- **Emergency Procedures** — spill, exposure, equipment failure — each as a numbered action sequence
+- **Training & Qualification Requirements** — what certifications or sign-offs are needed before operation
+- **Threshold Flags** — any chemicals, voltages, pressures, or temperatures that exceed standard lab thresholds (flag with `> ⚠️`)
+
+Format as a structured audit checklist. Be precise and leave no ambiguity.""",
 }
 
 
@@ -446,10 +460,23 @@ FULL CONTENT:
 {f"USER NOTE: {extra_context}" if extra_context else ""}
 ---
 
-Write the study guide now. Use markdown with clear headings and bullet points.
-Do not copy the SOP verbatim — synthesise and explain it for your audience."""
+Write the study guide now following these formatting rules exactly:
 
-    return _chat(prompt, max_tokens=2500)
+STRUCTURE (use these sections in this order, skipping any that don't apply):
+1. Start with a `## TL;DR` section — 2–3 sentences that tell the reader the single most important thing about this process/document.
+2. Then the role-specific sections from your instructions above (use `##` for main sections).
+3. Use `###` for subsections and `**bold**` for key terms the first time they appear.
+4. Keep paragraphs to 3 sentences max — prefer concise bullet lists over prose.
+5. Use `> blockquote` for critical warnings, safety notices, or must-know facts.
+6. End with a `## Key Takeaways` section — 3–5 bullet points the reader should remember.
+
+RULES:
+- Do NOT copy the SOP verbatim — synthesise, explain, and adapt it for your audience.
+- Write in plain English; define jargon when you introduce it.
+- The guide should be scannable: a reader should be able to skim the headings and bullet points and still understand 80% of the content.
+- Total length: aim for 400–700 words (longer if the SOP is complex)."""
+
+    return _chat(prompt, max_tokens=3500)
 
 def generate_personalized_process_page(
     process: dict,

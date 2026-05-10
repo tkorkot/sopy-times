@@ -136,16 +136,27 @@
           class="w-full border border-purple-300 rounded-lg px-3 py-1.5 text-sm mb-2 focus:outline-none focus:ring-2 focus:ring-purple-400 bg-white">
           <option value="">Loading roles…</option>
         </select>
+        <textarea id="studyGuideContext" rows="2"
+          placeholder="Optional: add context (e.g. 'focus on safety', 'I work night shift')"
+          class="w-full border border-purple-200 rounded-lg px-3 py-2 text-xs mb-2 resize-none
+                 focus:outline-none focus:ring-2 focus:ring-purple-400 bg-white text-gray-700 placeholder-gray-400"></textarea>
         <button id="generateSummaryBtnSidebar"
           class="w-full bg-purple-600 text-white rounded-lg py-1.5 text-sm font-medium hover:bg-purple-700 transition">
           Generate Study Guide
         </button>
-        <p id="summaryStatus" class="hidden text-xs text-purple-600 mt-2 text-center">Generating…</p>
+        <div id="summaryStatus" class="hidden mt-2 flex items-center justify-center gap-2 text-xs text-purple-600">
+          <svg class="animate-spin w-3.5 h-3.5 text-purple-500" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"/>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+          </svg>
+          Generating…
+        </div>
+        <p id="summaryError" class="hidden text-xs text-red-500 mt-2 text-center"></p>
       </div>
 
       <!-- Change History -->
       <div class="border border-gray-100 rounded-xl p-4">
-        <h3 class="font-semibold text-sm text-gray-700 mb-2">Change History</h3>
+        <h3 class="font-semibold text-sm text-white mb-2">Change History</h3>
         <div id="changeHistoryList" class="space-y-2">
           <p class="text-xs text-gray-400">Loading…</p>
         </div>
@@ -153,7 +164,7 @@
 
       <!-- Related documents -->
       <div class="border border-gray-100 rounded-xl p-4">
-        <h3 class="font-semibold text-sm text-gray-700 mb-2">Related SOPs</h3>
+        <h3 class="font-semibold text-sm text-white mb-2">Related SOPs</h3>
         <div id="relatedList" class="space-y-1 text-sm"></div>
       </div>
 
@@ -176,19 +187,31 @@
   </template>
 
   <!-- Study guide modal (inside content block so Jinja renders it) -->
-  <div id="summaryModal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-start justify-center p-4 overflow-y-auto">
-    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl mt-8 mb-8">
-      <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
+  <div id="summaryModal" class="hidden fixed inset-0 bg-black/60 z-50 flex items-start justify-center p-4 overflow-y-auto">
+    <div class="bg-white rounded-2xl shadow-2xl w-full max-w-3xl mt-8 mb-8 overflow-hidden">
+      <div class="flex items-center justify-between px-6 py-4 bg-gradient-to-r from-purple-700 to-purple-500">
         <div>
           <h2 class="font-bold text-lg text-white" id="summaryModalTitle">Study Guide</h2>
-          <p class="text-xs text-gray-400" id="summaryModalSubtitle"></p>
+          <p class="text-xs text-purple-200" id="summaryModalSubtitle"></p>
         </div>
         <div class="flex items-center gap-3">
-          <button id="copySummaryBtn" class="text-sm text-blue-600 hover:underline">Copy</button>
-          <button id="closeSummaryModal" class="text-gray-400 hover:text-gray-700 text-xl leading-none">✕</button>
+          <button id="printSummaryBtn"
+            class="text-sm text-purple-200 hover:text-white transition flex items-center gap-1">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+            </svg>
+            Print
+          </button>
+          <button id="copySummaryBtn" class="text-sm text-purple-200 hover:text-white transition">Copy</button>
+          <button id="closeSummaryModal" class="text-purple-200 hover:text-white text-xl leading-none transition">✕</button>
         </div>
       </div>
-      <div id="summaryContent" class="px-6 py-5 prose prose-sm max-w-none text-gray-800 leading-relaxed"></div>
+      <div id="summaryContent" class="px-8 py-6 prose prose-sm max-w-none text-gray-800 leading-relaxed
+        prose-headings:text-gray-900 prose-h2:text-base prose-h2:font-semibold prose-h2:mt-5 prose-h2:mb-2
+        prose-h3:text-sm prose-h3:font-semibold prose-h3:text-purple-800 prose-h3:mt-4 prose-h3:mb-1
+        prose-ul:my-1 prose-li:my-0.5 prose-p:my-2
+        prose-strong:text-gray-900 prose-code:bg-gray-100 prose-code:px-1 prose-code:rounded
+        prose-blockquote:border-purple-300 prose-blockquote:bg-purple-50 prose-blockquote:text-purple-900 prose-blockquote:px-4 prose-blockquote:py-1 prose-blockquote:rounded-r-lg"></div>
     </div>
   </div>
 
