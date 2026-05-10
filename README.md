@@ -51,8 +51,8 @@ Users can annotate or edit documents and optionally propagate changes to related
 |---|---|
 | Frontend | Next.js 14, React 18, TypeScript, Tailwind CSS |
 | Backend | Python, Flask, Flask-SQLAlchemy |
-| Database | Prisma ORM |
-| AI | Anthropic Claude API, OpenAI API |
+| Database | SQLite + Flask-SQLAlchemy |
+| AI | OpenRouter API, OpenAI API |
 | PDF Processing | PyMuPDF (fitz) |
 | Document Sync | Google Drive integration |
 
@@ -63,14 +63,14 @@ Users can annotate or edit documents and optionally propagate changes to related
 ### Prerequisites
 - Python 3.14+
 - [uv](https://docs.astral.sh/uv/) installed
-- A `.env` file with your API keys (Anthropic, OpenAI, Google Drive credentials)
+- A `.env` file with your API keys (OpenRouter, OpenAI, Google Drive credentials)
 
 ### Backend Setup
 
 ```bash
 uv sync
-uv run python seed.py       # seed the database
-uv run python app.py        # start the Flask server
+uv run python seed.py    # create tables and seed the database
+uv run python app.py     # start the Flask server
 ```
 
 ### Syncing Documents from Google Drive
